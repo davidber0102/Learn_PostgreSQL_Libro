@@ -1,0 +1,172 @@
+/***************************************************************************************************************
+*****************************Nombre del Libro: Learn PostgreSQL*************************************************
+****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
+*********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
+***************************************************************************************************************/
+----------------------------------Sección 1: Primeros pasos----------------------------------------------------
+---------------------Capítulo 1: Introducción a PostgreSQL
+*PostgreSQL 12 y 13
+*Crear soluciones de bases de datos
+Objetivos 
+Empieza desde la explicación qué PostgreSQL, es base de datos relacional, después  nos ayuda y reconocerlas diferentes versiones y dependencias de PostgreSQL. 
+continuamos como obtener e instalar PostgreSQL y por ultimo cómo administrar el clúster con las herramientas necesarias.
+Principales cualidades
+* sólida estabilidad
+*escalabilidad
+*seguridad
+*funciones de un sistema de administración de bases de datos de nivel empresarial
+---------------------------------------------------------------------------------------------------------------------------
+--- Requerimientos técnicos
+conocimientos básicos del sistema operativo Linux en cualquier distribución
+conocimientos del sistema operativo FreeBSD 
+--- PostgreSQL de un vistazo
+		* una sola instancia puede contener más de 4 mil millones de bases de datos individuales.
+		* c/u tamaño ilimitado y capacidad mil millones de tablas.
+		* cada tabla con 32 TB de datos.
+		* una sola tabla puede tener 1600 columnas
+		* cada columna con una de 1 GB de tamaño
+		* número ilimitado de índices de varias columnas (hasta 32 columnas).
+		* PostgreSQL es totalmente compatible con ACID (atomicity, consistency, isolation, and durability --- atomicidad, consistencia, aislamiento y durabilidad)
+			* atomicidad: es cuando una operación compleja en la BBDD, se procesa como una sola instrucción, incluso cuando se compone de diferentes operaciones.
+			* consistencia: es cuando los datos dentro de la BBDD, siempre se mantienen consistentes y que no se corrompen debido a operaciones realizadas parcialmente.
+			* aislamiento: es cuando la BBDD se maneje la concurrencia, es decir, sin tener datos dañados por cambios intercalados.
+			* durabilidad: es cuando la BBDD debe proteger los datos en su interior, ncluso en el caso de fallas de software y hardware,tanto como pueda.
+		* Lenguajes integrados, como Perl, Python, Java e incluso Bash
+		* Extensiones para diferentes procesos y mejoras
+		*PostgreSQL se ejecuta en prácticamente todos los sistemas operativos que existen,
+		* PostgreSQL 12 nuevas funciones con respecto a sus versiones anteriores
+			* optimizaciones de rendimiento
+			* reconstrucción simultánea de índices
+			* autenticación multifactorial y cifrado TCP/IP a través de GSSAPI
+			* Compatibilidad con el lenguaje de ruta SQL JSON
+			* eliminando opciones en conflicto y términos y tipos de SQL obsoletos
+		*PostgreSQL 13
+			* Creación de particiones,
+			* Replicación,
+			* Índices,
+			* Estadísticas,15
+------------------------------------------------------------------------------------------------------------------------------------
+--- Explorando la terminología de PostgreSQL
+- Una instancia de PostgreSQL se denomina clúster
+- Una sola instancia puede servir y manejar varias BBDD
+- Una base de datos se puede organizar en espacios de nombres, llamados esquemas
+- Cada objeto pertenece a un esquema, POR DEFAULT es el esquema pUblic.
+- PostgreSQL divide a los usuarios en dos categorías principales:
+	* Usuarios normales: pueden conectarse y manejar bases de datos y objetos según SUS PRIVILEGIOS
+	* Superusuarios: pueden hacer cualquier cosa con cualquier objeto de la base de datos
+- PostgreSQL, almacena sus datos internos (usuarios, bases de datos, espacios de nombres, configuración) en catálogos(tablas especiales)
+- PostgreSQL almacena todo su contenido(datos de usuario y estado interno) en un único directorio(PGDATA).
+- WAL antes de aplicar cualquier cambio a una parte de los datos, se haga persistente un registro de intenciones
+- El catálogo de PostgreSQL es fundamental para el ciclo de vida del clúster y refleja prácticamente todas las acciones que realiza la base de datos sobre las estructuras y los datos del usuario
+- esquema de información: colección de tablas comunes a todas las implementaciones de bases de datos estándar, incluido PostgreSQL
+- esquema de información define una tabla que recopila información sobre todas las tablas definidas por el usuario para que sea posible consultar el esquema de información
+- Clúster: Clúster se refiere a todo el servicio de PostgreSQL.
+- Postmaster: primer proceso que ejecuta el clúster, y  responsable de realizar seguimiento de  actividades de todo el clúster.
+- Base de datos: de datos aislado al que se pueden conectar los usuarios (o las aplicaciones).
+--- Instalación de PostgreSQL 12 o superior
+- PostgreSQL puede ejecutarse en varios sistemas operativos Unix y similares a Unix, como Linux, así como en Microsoft Windows
+- Hay dos formas principales de poner en marcha PostgreSQL 12, de la siguiente manera:
+	* Compilando a partir de fuentes
+	* Usando un paquete binario
+- PostgreSQL componentes para instalar:
+	*  El servidor PostgreSQL
+	* El cliente PostgreSQL
+	* El paquete de contribuciones de PostgreSQL
+	* Los documentos de PostgreSQL
+	* PostgreSQL PL/Perl, PL/Python y PL/Tcl
+- GNU/Linux Debian, Ubuntu y derivados
+	* necesario que primero instale la fuente y la firma del repositorio
+	* importar el repositorio en un disco de Ubuntu 19.10, debe ejecutar lo siguiente
+		-$ sudo /bin/sh -c '/bin/echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+		-$ wget --quiet -O -
+		-$ sudo apt-get update
+		-$ sudo apt install postgresql-12 postgresql-client-12 postgresqlcontrib-12
+		-$ sudo update-rc.d postgresql enable
+		-$ sudo service postgresql start
+- Fedora
+	* instalar el repositorio PGDG y luego continuar con la instalación como un paquete de distribución:
+		-$ sudo dnf install https://download.postgresql.org/pub/repos/yum/reporpms/F-30-x86_64/ pgdg-fedora-repo-latest.noarch.rpm
+		-$ sudo dnf -y install \
+						postgresql12-server \
+						postgresql12-contrib \
+						postgresql12-docs \
+						postgresql12
+	* Configure el sistema especificando el directorio PGDATA
+		- $ sudo systemctl edit postgresql-12
+	* editor de texto predeterminado con un archivo vacío, ego guardar y salir del editor para aplicar los cambios:
+		- [Service]
+		- Environment=PGDATA=/postgres/12
+	* Inicialice el directorio de la base de datos	
+		- sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
+	* Habilite PostgreSQL 12 para que se inicie en el momento del arranque e inicie el servidor inmediatamente
+		- $ sudo systemctl enable postgresql-12
+		-$ sudo systemctl start postgresql-12.service
+		- $ sudo service postgresql-12 start
+- FreeBSD
+	* disponible en FreeBSD mediante puertos y paquetes
+		- $ pkg update
+		- $ pkg search postgresql12
+	* Instale los paquetes ejecutando pkg
+		- $ sudo pkg install postgresql12-server-12.1 \
+							postgresql12-client-12.1 \
+							postgresql12-contrib-12.1 \
+							postgresql12-docs-12.1
+	* Inicialice el directorio para servir la base de datos y habilitar el inicio del servidor en el arranque de la máquina /etc/rc.conf
+		# to enable PostgreSQL at boot time
+		postgresql_enable="YES"
+		# PGDATA to use
+		postgresql_data="/postgres/12"
+	* crear e inicializar el directorio donde PostgreSQL 12 almacenará los datos
+		- $ sudo /usr/local/etc/rc.d/postgresql initdb
+	* Inicie la instancia de PostgreSQL
+		sudo service postgresql start
+- Instalar PostgreSQL desde las fuentes
+	* tar
+	*GNU make
+	*compilador C compatible con el estándar C99 (o superior).
+	* descargar el tarball de PostgreSQL relacionado con la versión que desea instalar
+		-$ wget https://ftp.postgresql.org/pub/source/v12.1/postgresql-12.1.tar.bz2
+		-$ wget https://ftp.postgresql.org/pub/source/v12.1/postgresql-12.1.tar.bz2
+	*verifique que el tarball descargado esté intacto
+		$ md5sum --check postgresql-12.1.tar.bz2.md5
+	*extraer su contenido e iniciar la compilación
+		$ tar xjvf postgresql-12.1.tar.bz2
+		$ cd postgresql-12.1
+		$ ./configure --prefix=/usr/local
+		$ make && sudo make install
+	* crear un usuario para ejecutar base de datos con, generalmente llamada postgres, e inicialice el directorio de la base de datos
+		$ sudo useradd postgres
+		$ sudo mkdir /postgres/12
+		$ sudo chown postgres:postgres /postgres/12
+		$ /usr/local/bin/initdb -D /postgres/12.md5
+-Instalación de PostgreSQL a través de pgenv
+	* herramienta agradable y pequeña que le permite descargar y administrar varias instancias de diferentes versiones de PostgreSQL en la misma máquina.
+	* al ser una herramienta externa, pgenv debe instalarse antes de poder usarse. script Bash
+		- Clonar el repositorio de GitHub y configurar la variable de entorno PATH para apuntar al directorio ejecutable
+			* $ git clone https://github.com/theory/pgenv
+			* $ export PATH=$PATH:./pgenv/bin
+		-el comando pgenv está al alcance de su mano y puede ejecutar el comando
+			* $ pgenv
+		- herramienta para automatizar las cosas "aburridas", es decir, descargar, compilar, instalar e iniciar/detener un clúster
+		-Para poder instalar las versiones 12.0 y 12.1 de PostgreSQL
+			* $ pgenv build 12.0
+			* $ pgenv build 12.1
+		descargarán y compilarán las dos versiones de PostgreSQL
+		qué instancia comenzar con el comando de uso
+			* $ pgenv use 12.0
+		Puede conectarse a ella con cualquier herramienta de cliente que desee, sobre todo psql
+			$ psql -U postgres -h localhost template1
+		Si necesita detener y cambiar la versión de PostgreSQL para usar
+			$ pgenv stop
+			$ pgenv use 12.1
+			$ pgenv versions
+			
+	- Instalación en Windows
+		*Descargar de la pagina oficial
+		*Ejecutar archivo descragado, dar siguiente
+		*Componentes selecionar los necesarios para la administracion
+			ruta por default
+		*Directorio de las bases
+		*Escribir contraseña y tenerla presente
+		*puerto por default, o si lo crees pretinente cambiarlo
+--- Referencias

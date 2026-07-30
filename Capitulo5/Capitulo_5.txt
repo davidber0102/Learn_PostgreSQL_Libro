@@ -1,0 +1,12 @@
+/***************************************************************************************************************
+*****************************Nombre del Libro: Learn PostgreSQL*************************************************
+****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
+*********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
+***************************************************************************************************************/
+----------------------------------Sección 1: Primeros pasos----------------------------------------------------
+---------------------Capítulo 1: Introducción a PostgreSQL
+--- Requerimientos técnicos
+--- PostgreSQL de un vistazo
+--- Explorando la terminología de PostgreSQL
+--- Instalación de PostgreSQL 12 o superior
+--- Referencias

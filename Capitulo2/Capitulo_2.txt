@@ -1,0 +1,23 @@
+/***************************************************************************************************************
+*****************************Nombre del Libro: Learn PostgreSQL*************************************************
+****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
+*********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
+***************************************************************************************************************/
+----------------------------------Sección 1: Primeros pasos----------------------------------------------------
+---------------------Capítulo 2: Conociendo tu Cluster
+--- Requerimientos técnicos
+	-Sentencias básicas de SQL
+	-Uso básico de la línea de comandos de Unix
+	-Cómo instalar paquetes binarios en su máquina Unix
+--- Administrar su clúster
+	* PostgreSQL es un servicio que se puede iniciar, detener y, por supuesto, monitorear.
+	* PostgreSQL incluye una herramienta "pg_ctl",  ayuda a administrar el clúster y los procesos en ejecución relacionados
+	* pg_ctl acciones en un clúster, principalmente inicializarlo, iniciarlo, reiniciarlo y detenerlo
+		iniciar, detener y reiniciar
+		estado actual
+		cargar la configuración
+		cambios de configuración
+		replicación
+--- Conexión al clúster
+--- Exploración del diseño del disco de PGDATA
+--- Exploración de archivos de configuración y parámetros
