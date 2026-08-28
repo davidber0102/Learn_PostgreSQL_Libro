@@ -12,12 +12,75 @@
 --- Administrar su clúster
 	* PostgreSQL es un servicio que se puede iniciar, detener y, por supuesto, monitorear.
 	* PostgreSQL incluye una herramienta "pg_ctl",  ayuda a administrar el clúster y los procesos en ejecución relacionados
-	* pg_ctl acciones en un clúster, principalmente inicializarlo, iniciarlo, reiniciarlo y detenerlo
+	* pg_ctl acciones en un clúster, iniciarlo, reiniciarlo y detenerlo
 		iniciar, detener y reiniciar
 		estado actual
 		cargar la configuración
 		cambios de configuración
 		replicación
+	* pg_ctl status 
+		para realizarlo dentro windowos, 
+			ejecutamos el sistema de simbolo 
+			direccionamos ala ruta (version/bin)
+			ejecutamos el siguiente comando para ver el status "pg_ctl -D "C:\Program Files\PostgreSQL\16\data" status"
+			el resultado es "pg_ctl: el servidor está en ejecución (PID: 4676)"
+			Identificador de proceso (PID)
+	* pg_ctl start
+		si el comando anterior da otro resultado se debe ejecutar lo siguiente
+			"pg_ctl -D "C:\Program Files\PostgreSQL\16\data" start"
+	* pg_ctl stop
+		Se puede detener el servicio con el siguiente comando 
+			"pg_ctl -D "C:\Program Files\PostgreSQL\16\data" stop"
+				como resultado "esperando que el servidor se detenga.... listo
+				servidor detenido"
+		* modo inteligente (smart -s) = esperará a que todos los clientes conectados se desconecten y solo entonces cerrará el clúster
+		* modo rápido (fast -f) = esconectará inmediatamente a todos los clientes y apagará el servidor sin tener que esperar
+		* modo inmediato (immediate -i) = anulará todos los procesos de PostgreSQL, incluidas las conexiones de los clientes, y apagará el clúster de manera sucia
+			predeterminado=  modo rapido 
+	* pg_ctl stop -m smart (smart -s/fast -f/immediate -i)
+		sperará, imprimiendo un punto cada segundo hasta que todos los clientes se desconecten del servidor
+		No se podra conectar a ningun cluster desde otro cliente, recibirar un mensaje de error
+	* sudo -E -u postgres pg_ctl stop
+	*PGDATA se puede agregar como una variable de entorno dentro de las propiedades avanzadas del sistema operativo
+	sudo service postgresql start
+	- Procesos PostgreSQL
+		Si inspecciona un clúster en ejecución desde el punto de vista del sistema operativo, verá un montón de procesos vinculados a PostgreSQL:
+		pstree no existe en winwos, es nativo del sistema de linux
+		para ver los procesos desecadentas de postgresql nos dirigimos a cmd y ejecutamos el siguiente comando	
+			wmic process where "name='postgres.exe'" get processid,parentprocessid,caption
+		Como resultado 
+			Caption       ParentProcessId  ProcessId
+				postgres.exe  5368             10016
+				postgres.exe  10016            7156
+				postgres.exe  10016            5676
+				postgres.exe  10016            9092
+				postgres.exe  10016            8892
+				postgres.exe  10016            10116
+				postgres.exe  10016            3832
+				postgres.exe  10016            9020
+		Denteo de powerSehl, con el siguiente conando
+			Get-CimInstance Win32_Process -Filter "Name='postgres.exe'" | Select-Object ProcessId, ParentProcessId, Caption
+PostgreSQL utiliza un enfoque de proceso para la concurrencia en lugar de un enfoque de subprocesos múltiples. Hay diferentes razones, sobre todo el aislamiento y la
+portabilidad que ofrece un enfoque multiproceso
+una vez que se ejecuta PostgreSQL, hay un árbol de procesos que se enraízan en postmaster El objetivo de este último es generar nuevos procesos cuando existe la necesidad de manejar nuevas
+conexiones de base de datos
 --- Conexión al clúster
+	Una vez que PostgreSQL se está ejecutando, espera las conexiones entrantes de la base de datos para servir
+	bases de datos de plantilla: sirven como una base de datos común a la que puede conectarse en un clúster recién instalado
+	Cuando inicializa el clúster (initdb) , PostgreSQL crea el diseño del sistema de archivos del directorio PGDATA y crea dos bd-plantillas, (template0 y template1)
+	Para conectarse a una de las bases de datos, ya sea una plantilla o una definida por el usuario, debe necesita un cliente para conectar con. PostgreSQL
+	- bases de datos de plantilla
+		template1: creada cuando se inicializa el sistema
+		template0: clon de la anterior, copia segura para reconstruir en caso de que sea dañado o eliminado accidentalmente.
+		- inspeccionar las bases de datos disponibles
+			- En la consola de comandos poner psql -l 
+			- DEntro de PgAdmin esSELECT datname FROM pg_database;
+			- Para arrancar postgres de CMD, 
+				- ubicamos la siguiente ruta	"C:\Program Files\PostgreSQL\17\bin"
+				- dentro de la barra de la ruta ponemos cdm y se ejecutara el simbolo del sistema en esa ruta
+				- arrancamos con la siguiente intruccion "psql -U postgres"
+				- pedira contrasñea de la instalacion, se coloca y has entrado al entorno de postgres
+				- colocas el comando "\l" para listar las bases de datos instaladas
+				
 --- Exploración del diseño del disco de PGDATA
 --- Exploración de archivos de configuración y parámetros

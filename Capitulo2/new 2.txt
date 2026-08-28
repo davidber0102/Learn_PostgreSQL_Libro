@@ -1,0 +1,624 @@
+/* ********************************************************************************
+Con el contexto de tu perfil (PostgreSQL/PostGIS, QGIS, bases de datos geoespaciales, 
+gobierno, Spring Boot y desarrollo Back-End), no necesitas aprender más tecnologías 
+antes de mostrar tu trabajo. Lo que necesitas es convertir conocimiento en evidencia pública.
+
+El error que cometen muchos profesionales es estudiar durante meses sin producir nada visible.
+
+Tu objetivo durante las próximas 8 semanas será producir un portafolio que haga que un reclutador 
+o un gerente de TI piense:
+
+"Esta persona no solamente sabe PostgreSQL. Sabe diseñar arquitecturas, documentar, 
+automatizar procesos y liderar proyectos."
+
+Objetivo General
+Convertirte en un especialista visible en PostgreSQL/PostGIS y Arquitectura de Datos 
+mediante un proyecto profesional documentado públicamente.
+
+Al finalizar tendrás:
+Un repositorio profesional en GitHub.
+Más de 20 scripts SQL organizados.
+Documentación tipo empresa.
+Diagramas.
+Automatizaciones.
+Artículos en LinkedIn.
+Casos reales.
+Dashboard del progreso.
+Evidencia de lectura del libro.
+
+Todo esto servirá como experiencia demostrable.
+
+Meta de las 8 semanas
+
+Construir un proyecto llamado
+
+Enterprise PostgreSQL Administration & PostGIS Project
+
+que muestre desde instalación hasta arquitectura empresarial.
+
+Estructura del repositorio
+Enterprise-PostgreSQL13
+
+│
+├── 01_Installation
+│
+├── 02_PostgreSQL_Basics
+│
+├── 03_SQL
+│
+├── 04_Indexes
+│
+├── 05_Query_Optimization
+│
+├── 06_PostGIS
+│
+├── 07_QGIS
+│
+├── 08_Administration
+│
+├── 09_Backup_Restore
+│
+├── 10_Replication
+│
+├── 11_Security
+│
+├── 12_Auditing
+│
+├── 13_Performance
+│
+├── 14_Monitoring
+│
+├── 15_Project
+│
+├── images
+│
+├── diagrams
+│
+├── documentation
+│
+├── scripts
+│/LearnPostgreSQL_Libro
+└── README.md
+Organización de SQL
+
+Nunca subir SQL mezclados.
+
+scripts
+
+001_create_database.sql
+
+002_create_schemas.sql
+
+003_roles.sql
+
+004_extensions.sql
+
+005_tables.sql
+
+006_constraints.sql
+
+007_indexes.sql
+
+008_views.sql
+
+009_functions.sql
+
+010_triggers.sql
+
+011_partitions.sql
+
+012_security.sql
+
+013_monitoring.sql
+
+014_backup.sql
+
+015_restore.sql
+
+016_audit.sql
+
+017_postgis.sql
+
+018_qgis.sql
+
+019_sample_data.sql
+
+020_performance.sql
+
+Así trabajan empresas.
+
+Organización de documentación
+documentation
+
+Architecture.pdf
+
+DatabaseDesign.pdf
+
+Performance.md
+
+BackupStrategy.md
+
+IndexStrategy.md
+
+Partitioning.md
+
+Monitoring.md
+
+Security.md
+
+Auditing.md
+
+Installation.md
+Diagramas
+diagrams
+
+ERD.png
+
+Architecture.png
+
+Network.png
+
+Schemas.png
+
+Workflow.png
+Carpeta imágenes
+images
+
+dashboard.png
+
+pgadmin.png
+
+qgis.png
+
+execution.png
+
+performance.png
+README profesional
+
+Debe contener
+
+Proyecto
+
+Descripción
+
+Arquitectura
+
+Imagen
+
+Tecnologías
+
+PostgreSQL
+
+PostGIS
+
+QGIS
+
+pgAdmin
+
+DBeaver
+
+Git
+
+GitHub
+
+Spring Boot
+
+Características
+
+✔ Auditoría
+
+✔ Seguridad
+
+✔ Índices
+
+✔ Triggers
+
+✔ Funciones
+
+✔ Particiones
+
+✔ Backup
+
+✔ Restore
+
+✔ Monitoreo
+
+✔ Optimización
+
+Instalación
+
+Paso a paso
+
+Scripts
+
+Lista
+
+Capturas
+Resultados
+Autor
+
+LinkedIn
+
+GitHub
+
+Correo
+
+Plan Intensivo (8 semanas)
+Semana 1
+Tema
+
+Fundamentos PostgreSQL
+
+Leer capítulos introductorios.
+
+Objetivos
+
+Instalar
+
+Configurar
+
+Entender arquitectura
+
+Memoria
+
+WAL
+
+MVCC
+
+Storage
+
+Proyecto
+
+Crear
+
+01_Installation
+
+Subir
+
+Scripts
+
+Capturas
+
+README
+
+Publicación LinkedIn
+
+Tema
+
+Lo que aprendí sobre la arquitectura interna de PostgreSQL.
+
+Semana 2
+
+SQL Avanzado
+
+SELECT
+
+JOIN
+
+Window Functions
+
+CTE
+
+Subconsultas
+
+Funciones
+
+Proyecto
+
+03_SQL
+
+Crear más de 30 consultas.
+
+Publicación
+
+"10 consultas SQL que todo DBA debería dominar"
+
+Semana 3
+
+Optimización
+
+Libro
+
+Índices
+
+EXPLAIN
+
+ANALYZE
+
+Buffers
+
+Planner
+
+Proyecto
+
+04_Indexes
+
+05_Query_Optimization
+
+Comparar
+
+Antes
+
+Después
+
+Mediciones
+
+Publicación
+
+Cómo un índice redujo una consulta de varios segundos a milisegundos.
+
+Semana 4
+
+Administración
+
+Usuarios
+
+Roles
+
+Permisos
+
+Schemas
+
+Backup
+
+Restore
+
+Proyecto
+
+08_Administration
+
+09_Backup_Restore
+
+11_Security
+
+Publicación
+
+Buenas prácticas de seguridad en PostgreSQL.
+
+Semana 5
+
+PostGIS
+
+Spatial Index
+
+Geometry
+
+Geography
+
+Proyecto
+
+06_PostGIS
+
+Crear
+
+Capas
+
+Consultas espaciales
+
+Buffers
+
+Intersections
+
+Nearest Neighbor
+
+Publicación
+
+Cómo PostgreSQL se convierte en un motor GIS.
+
+Semana 6
+
+QGIS
+
+Integración
+
+Triggers
+
+Versionado
+
+Proyecto
+
+07_QGIS
+
+Documentar el flujo completo.
+
+Publicación
+
+Automatización entre QGIS y PostgreSQL.
+
+Semana 7
+
+Monitoreo
+
+Logs
+
+Performance
+
+Auditoría
+
+Proyecto
+
+12_Auditing
+
+13_Performance
+
+14_Monitoring
+
+Instalar y configurar herramientas de monitoreo compatibles con PostgreSQL 13.
+
+Publicación
+
+Cómo detectar cuellos de botella en PostgreSQL.
+
+Semana 8
+
+Proyecto Final
+
+Integrar todo.
+
+Crear documentación profesional.
+
+Generar diagramas.
+
+Grabar un video corto mostrando el proyecto.
+
+Actualizar LinkedIn.
+
+Actualizar CV.
+
+Calendario Diario
+
+Lunes
+
+Lectura
+
+1 hora
+
+Práctica
+
+2 horas
+
+GitHub
+
+30 minutos
+
+Martes
+
+Lectura
+
+1 hora
+
+Laboratorio
+
+2 horas
+
+Documentación
+
+30 minutos
+
+Miércoles
+
+Proyecto
+
+3 horas
+
+Jueves
+
+Libro
+
+1 hora
+
+Proyecto
+
+2 horas
+
+Viernes
+
+Optimización
+
+2 horas
+
+GitHub
+
+1 hora
+
+Sábado
+
+Proyecto completo
+
+4 horas
+
+Domingo
+
+Resumen
+
+LinkedIn
+
+Planificación
+
+2 horas
+
+Publicaciones LinkedIn (1 por semana)
+
+Semana 1
+
+Arquitectura PostgreSQL
+
+Semana 2
+
+SQL avanzado
+
+Semana 3
+
+Índices
+
+Semana 4
+
+Administración
+
+Semana 5
+
+PostGIS
+
+Semana 6
+
+QGIS
+
+Semana 7
+
+Performance
+
+Semana 8
+
+Proyecto final
+
+Habilidades Blandas
+
+Cada semana desarrolla una competencia junto con la técnica:
+
+Semana	Técnica	Habilidad blanda
+1	Arquitectura PostgreSQL	Pensamiento sistémico
+2	SQL avanzado	Comunicación técnica escrita
+3	Optimización	Resolución estructurada de problemas
+4	Administración y seguridad	Gestión del riesgo y disciplina operativa
+5	PostGIS	Pensamiento espacial y analítico
+6	Integración QGIS	Colaboración y documentación
+7	Monitoreo y auditoría	Toma de decisiones basada en datos
+8	Proyecto final	Liderazgo técnico y presentación ejecutiva
+Indicadores de Éxito (KPIs)
+
+No midas únicamente horas de estudio. Mide resultados concretos.
+
+Indicador	Meta en 8 semanas
+Capítulos del libro estudiados	100 %
+Scripts SQL documentados	20–30
+Consultas avanzadas implementadas	50+
+Diagramas técnicos	5–8
+Documentos técnicos	8–10
+Commits en GitHub	80–120
+Publicaciones en LinkedIn	8
+Casos prácticos completos	6–8
+Proyecto integrador final	1
+README profesional	1 completo
+Estrategia de GitHub
+
+No hagas un solo commit al final del día. Trabaja con una historia visible del proyecto:
+
+Un commit por funcionalidad o avance significativo.
+Mensajes descriptivos (feat:, docs:, fix:, perf:).
+Una rama main siempre estable y una rama develop para experimentación.
+Cada carpeta debe incluir un README.md explicando el propósito, requisitos, scripts y resultados esperados.
+Estrategia para LinkedIn
+
+Cada publicación debe seguir una estructura consistente:
+
+Problema: ¿Qué desafío resuelve el tema?
+Aprendizaje: ¿Qué descubriste al estudiar y practicar?
+Evidencia: Captura de pantalla, diagrama o consulta SQL.
+Aplicación: ¿Cómo se usa en un entorno real?
+Invitación: Una pregunta que fomente conversación.
+
+Esto convierte tu aprendizaje en una narrativa profesional y demuestra capacidad de comunicación técnica.
+
+Resultado esperado
+
+Si ejecutas este plan con disciplina durante ocho semanas, no solo habrás leído Mastering PostgreSQL 13. Habrás construido un portafolio que evidencia competencias en administración de bases de datos, arquitectura, rendimiento, seguridad, automatización, documentación y comunicación técnica. Ese conjunto de evidencias tiene mucho más peso en procesos de selección, evaluaciones de desempeño o postulaciones que una lista de cursos completados, porque demuestra que sabes diseñar, implementar, explicar y mantener soluciones reales.

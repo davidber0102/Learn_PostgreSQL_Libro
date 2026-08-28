@@ -1,0 +1,43 @@
+EL FLUJO DESPUES DEL SCRIPT 15, SERIA EL SIGUIENTE'
+1 Procedimiento metadata.sp_qgis_sync_project
+2 FUNCION metadata.fn_qgis_project_sync()
+4 Trigger  metadata.sp_instalar_trigger
+5 Trigger  metadata.sp_instalar_triggers()
+6 Procedimiento metadata.sp_verificar_triggers()
+3 Procedimiento tr_qgis_sync'
+
+¿Y el trigger tr_qgis_sync?
+
+El trigger no debe crearse como un script independiente antes de que exista qgis_projects, porque esa tabla la crea QGIS automáticamente.
+El flujo correcto es:
+	Scripts 01–14
+        	│
+        	▼
+	La base queda preparada
+        	│
+        	▼
+	QGIS guarda el primer proyecto
+        	│
+        	▼
+	QGIS crea municipal.qgis_projects
+        	│
+        	▼
+	CALL metadata.sp_instalar_trigger('municipal');
+        	│
+        	▼
+	Se crea tr_qgis_sync
+
+
+Orden definitivo de los Scripts
+
+Yo reorganizaría la Fase C así:
+
+11_fn_generar_hash.sql
+12_log_error.sql
+13_sp_qgis_sync_project.sql
+14_fn_qgis_project_sync.sql
+
+15_administracion_triggers.sql
+    ├── sp_instalar_trigger()
+    ├── sp_instalar_triggers()
+    └── sp_verificar_triggers()

@@ -1,0 +1,221 @@
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 21/04/2026 - 27/04/2026
+Registros: 2715
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+
+Nombre Sistema: CALLE 911 SEGURIDAD
+Periodo: 20/04/2026 - 26/04/2026
+Registros: 4904
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 20/04/2026 - 26/04/2026
+Registros: 1487
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+
+Nombre Sistema: SECRETARIADO EJECUTIVO-Municipal
+Periodo: MARZO 2026
+Registros: 125
+Almacenada: PostgreSQL: bd_dcg_ssem.secretariado_ejecu_incid.total_municipio_2026
+Responsable: David Bernal Diaz
+
+Nombre Sistema: SECRETARIADO EJECUTIVO-Delitos
+Periodo: MARZO 2026
+Registros: 14,250
+Almacenada: PostgreSQL: bd_dcg_ssem.secretariado_ejecu_incid.total_municipio_2026
+Responsable: David Bernal Diaz
+
+Nombre Sistema: SDA 089
+Periodo: 16/02/2026 - 22/02/2026
+Registros: 1111
+Almacenada: mexico_city.Estadísticas.estadisticas_089
+Responsable: David Bernal Diaz
+
+********************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 06/05/2026 - 11/05/2026
+Registros: 2351
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 04/05/2026 - 10/05/2026
+Registros: 1515
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+********************************************************
+
+********************************************************
+Nombre Sistema: SDA 089
+Periodo: 04/05/2026 - 10/05/2026
+Registros: 1109
+Almacenada: mexico_city.Estadísticas.estadisticas_089
+Responsable: David Bernal Diaz
+********************************************************
+
+*************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 12/05/2026 - 18/05/2026
+Registros: 2469
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 11/05/2026 - 17/05/2026
+Registros: 1434
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+@MARIA GONZALEZ MANZANARES  Y  @EMMANUEL SIHUE RAMOS MARTINEZ  les comento que se acaban de insertar los datos de DAI, AVG (18/05/2026 - 25/05/2026, 2633 registros) Y ACCIDENTES(18/05/2026 - 24/05/2026, 1468 registros), quedo pendiente de cualquier detalle a modificar.
+*************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 19/05/2026 - 25/05/2026
+Registros: 2633
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 18/05/2026 - 24/05/2026
+Registros: 1468
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+
+*************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 26/05/2026 - 01/06/2026
+Registros: 2646
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 25/05/2026 - 31/05/2026
+Registros: 1680
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+*************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 02/06/2026 - 09/06/2026
+Registros: 2475
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 01/06/2026 - 07/06/2026
+Registros: 1349
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+60211,	VIOLENCIA CONTRA LA MUJER - 9 REGISTROS
+*************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 10/06/2026 - 15/06/2026
+Registros: 2053
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 08/06/2026 - 14/06/2026
+Registros: 1460
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+*************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 16/06/2026 - 22/06/2026
+Registros: 2476
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+**************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 15/06/2026 - 21/06/2026
+Registros: 1538
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+ECA26061603326-A
+*************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 23/06/2026 - 30/06/2026
+Registros: 2894
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+****************************************************************************************************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 22/06/2026 - 28/06/2026
+Registros: 1484
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+************************************************************************************
+Nombre Sistema: CONTROL OPERATIVO
+Periodo: 09/04/2026 - 30/05/2026
+Registros: 1656
+Almacenada: PostgreSQL: bd_dcg_ssem.control_operativo.co_2026
+Responsable: David Bernal Diaz
+***********************************************************************************************************************
+
+************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 01/07/2026 - 06/07/2026
+Registros: 2183
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+*************************************************************************************************
+****************************************************************************************************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 29/06/2026 - 05/07/2026
+Registros: 1421
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+CALLE 911 DAI y AVG 14/07/2026 - 15/07/2026 Registros: 	711
+************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 07/07/2026 - 15/07/2026
+Registros: 	3182
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+*************************************************************************************************
+**************************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 06/07/2026 - 12/07/2026
+Registros: 1426
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+
+************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 16/07/2026 - 20/07/2026
+Registros: 	2035
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+*************************************************************************************************
+**************************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 13/07/2026 - 19/07/2026
+Registros: 1432
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************
+
+************************************************************************************
+Nombre Sistema: CALLE 911 DAI y AVG
+Periodo: 21/07/2026 - 27/07/2026
+Registros: 	2512
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+*************************************************************************************************
+**************************************************************************************************
+Nombre Sistema: CALLE 911 ACCIDENTES
+Periodo: 20/07/2026 - 26/07/2026
+Registros: 1380
+Almacenada: PostgreSQL: bd_dcg_ssem.calle_911_gral."911_gral_2026"
+Responsable: David Bernal Diaz
+**************************************************************************************

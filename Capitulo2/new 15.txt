@@ -1,0 +1,27 @@
+1.- 
+	EVITALO 
+		SELECT * FROM users;
+	MEJOR ASI
+		SELECT id, name, email FROM users;
+
+2. 
+	EVITALO 
+		SELECT DISTINCT u.id, u.name FROAM users u
+		JOIN orders o ON o.user_id = u.id;
+	MEJOR ASI
+		SELECT u.id, u.name FROAM users u
+		WHERE EXISTS (
+			SELECT 1 FROM order o 
+			WHERE o.user_id = u.id
+			);
+3. 
+	EVITALO 
+		SELECT id. title FROM posts 
+		ORDER BY id Limit 20 OFFSER 10000;
+	MEJOR ASI
+		SELECT id, titile FROM posts
+		WHERE id > 10000 
+		ORDER BYid 
+		LIMIT 20;
+		
+		

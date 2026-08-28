@@ -1,0 +1,45 @@
+Crear Base de Datos
+        │
+        ▼
+Ejecutar Scripts 01-15
+        │
+        ▼
+QGIS crea automáticamente:
+coordinacion.qgis_projects
+municipal.qgis_projects
+...
+        │
+        ▼
+Instalar Trigger en un esquema
+CALL metadata.sp_instalar_trigger('municipal');
+        │
+        ▼
+o instalar en todos
+CALL metadata.sp_instalar_triggers();
+        │
+        ▼
+Verificar instalación
+CALL metadata.sp_verificar_triggers();
+        │
+        ▼
+Usuarios comienzan a guardar proyectos
+        │
+        ▼
+Trigger
+        │
+        ▼
+metadata.sp_qgis_sync_project()
+        │
+        ├── metadata.proyecto
+        ├── metadata.version
+        ├── log.auditoria
+        └── log.error_sincronizacion (si ocurre algún error)
+		
+Las técnicas fomentan la verdad y la buena relación.		
+		Escuch Activa: Demostrar una escucha atenta parafraseando y resumiendo 
+					los ​puntos del orador ayuda a transmitir comprensión y aprecio por su perspectiva
+		Empatia: Mostrar empatía y comprensión hacia las emociones y ​preocupaciones del orador 
+				crea un entorno seguro para la expresión abierta y el respeto mutuo
+		Lenguaje no verbal
+		Autencidad
+		Consistencia
