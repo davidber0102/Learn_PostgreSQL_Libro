@@ -74,13 +74,154 @@ conexiones de base de datos
 		template0: clon de la anterior, copia segura para reconstruir en caso de que sea dañado o eliminado accidentalmente.
 		- inspeccionar las bases de datos disponibles
 			- En la consola de comandos poner psql -l 
-			- DEntro de PgAdmin esSELECT datname FROM pg_database;
+			- DEntro de PgAdmin es SELECT datname FROM pg_database;
 			- Para arrancar postgres de CMD, 
 				- ubicamos la siguiente ruta	"C:\Program Files\PostgreSQL\17\bin"
 				- dentro de la barra de la ruta ponemos cdm y se ejecutara el simbolo del sistema en esa ruta
 				- arrancamos con la siguiente intruccion "psql -U postgres"
 				- pedira contrasñea de la instalacion, se coloca y has entrado al entorno de postgres
 				- colocas el comando "\l" para listar las bases de datos instaladas
-				
+				- hay una tercera base de datos que se crea durante la instalación: postgres
+				- utilizará para las conexiones en lugar de las bases de datos de template
+				- no es obligatorio usar template1 como plantilla base, puede crear sus propias bases de datos y usarlas como plantillas para otras bases de datos
+			- El cliente de línea de comandos psql es la interfaz de línea de comandos que se incluye con cada instalación de PostgreSQL
+				-En cada actualizacion psql es el cliente más actualizado
+				- cliente es ligero y útil incluso en situaciones de emergencia cuando no se dispone de una GUI
+				- psql acepta varias opciones para conectarse a una BD, son las siguientes
+					-d: el nombre de la base de datos
+					-U: El nombre de usuario
+					-h: el host (ya sea una dirección IPv4 o IPv6 o un nombre de host)
+					- \conninfo
+						- mostrará de forma inmediata con qué usuario estás conectado, a qué base de datos, el servidor (host) y el puerto.
+						- psql informa la base de datos a la que se ha conectado el usuario
+						- un signo para indicar que es un superusuario (#).
+						- En el caso de que el usuario no sea administrador de la base de datos, se coloca un signo > al final
+						- Si necesita conectarse a una base de datos que tiene un nombre diferente según el nombre de usuario de su sistema operativo, debe especificarlo:
+							- \c template1
+						- Para salir de psql y cerrar la conexión a la base de datos, debe escribir \q
+					- Ingresar declaraciones SQL a través de psql
+						- conectado a una base de datos a través de psql, puede emitir cualquier declaración que desee
+						- Las declaraciones deben terminar con un punto y coma
+						- ejemplo en el que se ha enfatizado la tecla Intro
+							- SELECT current_date; <ENTER>
+							/*  current_date
+								--------------
+								 2026-09-22
+								(1 fila)  */
+							- comando \g 
+								- es útil cuando se conecta a través de un emulador de terminal que tiene teclas reasignadas:
+									- SELECT current_date \g <ENTER>
+									/*
+										current_date
+												--------------
+												2019-12-23
+												(1 row)
+												*/
+									- Hasta que finalice una declaración con un punto y coma o \g, psql mantendrá el contenido que está escribiendo
+									- en el búfer de consulta, por lo que también puede editar varias líneas de texto de la siguiente manera:
+										/*
+											postgres=# SELECT
+											postgres-# current_date
+											postgres-# ;
+											 current_date
+											--------------
+											 2026-09-22
+											(1 fila)
+										*/
+									- Una característica útil del búfer de consulta psql es la capacidad de editar el contenido del búfer de consulta en un editor externo.
+									- También es posible ejecutar todas las sentencias incluidas en un archivo o editar un archivo antes de ejecutarlo
+									- el cliente ha ejecutado, una tras otra, todas las sentencias del archivo.
+									- Si necesita editar el archivo sin salir de psql, puede ejecutar \e test.sql para abrir su editor favorito, realizar cambios y volver a la conexión de psql .
+						- Un vistazo a los comandos psql
+							- comando especial \h: nos ofrece ayuda sobre las declaraciones SQL y los comandos de PostgreSQL
+						- Si necesita ayuda con los comandos psql , puede emitir un \? dominio:
+							-\d para enumerar todas las tablas definidas por el usuario
+						- Introducción a la cadena de conexión
+							- LibPQ es la biblioteca subyacente que cada aplicación puede usar para conectarse a un clúster de PostgreSQL y, por ejemplo, se usa en clientes C y C++,
+								- Una cadena de conexión en LibPQ es un URI compuesto por varias partes:
+									- postgresql://username@host:port/database
+										- postgresql: cadena fija que especifica el protocolo al que se refiere el URI
+										- username: usuario de PostgreSQL que se utilizará al conectarse a la base de datos
+										- host: dirección IP para conectarse. 
+										- port: puerto TCP/IP en el que el servidor está escuchando (por defecto, 5432).
+										-  database: ombre de la base de datos a la que desea conectarse.
+										- Las siguientes conexiones son todas equivalentes:
+											$ psql -d template1 -U luca -h localhost
+											$ psql postgresql://luca@localhost/template1
+											$ psql postgresql://luca@localhost:5432/template1
+						- Solucionar problemas comunes de conexión
+						$ psql
+							- proporcionar un nombre de base de datos existente a través de la opción ~-d~ 
+							- crear una base de datos con el mismo nombre que el usuario.
+							- conexión denegada
+								- problema de conexión a la red, por lo que no se puede acceder al host
+								- Para resolver el problema rápidamente, debe editar el archivo postgresql.conf y asegurarse de que la opción listen_address tenga un asterisco
+								- Tenga en cuenta que permitir que el servidor escuche en cualquier dirección de red disponible podría no ser la solución óptima y puede exponer al servidor a riesgos en un entorno de producción
+								- No hay entrada pg_hba.conf
+									- significa que el servidor está funcionando y puede aceptar su solicitud, pero el control de acceso basado en host (HBA) no le permite ingresar
 --- Exploración del diseño del disco de PGDATA
---- Exploración de archivos de configuración y parámetros
+		- PostgreSQL explota el sistema de archivos subyacente para almacenar sus propios datos
+		- Todo el material relacionado con PostgreSQL está contenido en un directorio conocido como PGDATA.
+		- El directorio PGDATA actúa como el contenedor del disco que almacena todos los datos del clúster
+		- incluidos los datos de los usuarios y la configuración del clúster.
+			- Con el siguiente comando aparece una lista de conenido dentro de PGDATA
+				- $ sudo ls -1 /postgres/12
+			- Pero para hacerlo dentro del entorno de psql en la consola de cmd, se ejecuta el siguiente comando	
+				- SELECT pg_ls_dir('C:\Program Files\PostgreSQL\17\data');
+			- El directorio PGDATA y sus archivos principales son los siguientes:
+				- postgresql.conf: archivo de configuración principal, que se utiliza de forma predeterminada cuando se inicia el servicio.
+				- postgresql.auto.conf: archivo de configuración incluido automáticamente que se utiliza para almacenar configuraciones modificadas dinámicamente a través de instrucciones SQL 
+				- pg_hba.conf: archivo que proporciona la configuración con respecto a las conexiones de base de datos disponibles
+				- PG_VERSION: archivo de texto que contiene el número de versión principal
+				- postmaster.pid: es el PID del clúster en ejecución.
+				- base: directorio que contiene todos los datos de los usuarios, incluidas bases de datos, tablas y otros objetos
+				- global: directorio que contiene objetos de todo el clúster.
+				- pg_wal: directorio que contiene los archivos WAL
+				- pg_stat: el almacenamiento de la información estadística permanente y temporal sobre el estado y la salud del clúster.
+			- Objetos en el directorio PGDATA
+				- PostgreSQL no nombra los objetos en el disco, como las tablas, de forma mnemotécnica o legiblepor humanos; 
+				- en cambio, cada archivo lleva el nombre de un identificador numérico
+					- el siguiente comando se ejecuta en Linux para corroborar lo anterior
+						- sudo ls -1 /postgres/12/base
+						- SELECT pid, usename, datname, client_addr, state FROM pg_stat_activity;
+						- SELECT * FROM pg_database ORDER BY oid;
+					- cada archivo se nombra con un identificador numérico. Internamente, PostgreSQL tiene- un catálogo específico
+					- Que permite que la base de datos haga coincidir un nombre mnemotécnico con un identificador numérico y viceversa. El identificador entero se denomina OID (Identificador de objeto);
+					- Existe una utilidad específica que le permite inspeccionar un directorio PGDATA y extraer nombres nemotécnicos: oid2name.
+						 - SELECT datname, oid  FROM pg_database WHERE datname = 'tu_base_de_datos';
+						- Como puede ver, los números Oid en la salida de oid2name reflejan los mismos nombres de directorio que aparecen en el directorio base
+						- Cada OID corresponde a una tabla con nombre
+						-cada tabla SQL se almacena como un archivo con un nombre numérico.
+						- PostgreSQL no permite que un solo archivo tenga más de 1 GB de tamaño,
+						¿qué sucede si una tabla crece más allá de ese límite?
+							- si su tabla está almacenada en el archivo 123 , el segundo gigabyte se almacenará en el archivo 123.1 , y si se necesita otro gigabyte de almacenamiento , se creará otro archivo, 123.2
+			- Tablespaces	
+				- espacio de almacenamiento que puede estar fuera del directorio PGDATA
+				- Los tablespaces se arrastran al directorio PGDATA por medio de enlaces simbólicos almacenados en el subdirectorio pg_tblspc
+				- Es utilizado para lograr diferentes objetivos
+					- ampliar los datos de almacenamiento
+					- proporcionar diferentes rendimientos de almacenamiento
+					-Ejemplo:
+						- crear un espacio de tablas en un disco lento para contener objetos y tablas a los que se accede con poca frecuencia, manteniendo un almacenamiento rápido dentro de otro espacio de tablas para los objetos a los que se accede con frecuencia.
+					- PostgreSQL proporciona la función TABLESPACE para administrar esto y el clúster creará y administrará los enlaces apropiados en el subdirectorio pg_tblspc
+					- Para mostra el directori con l siguiente sentencia SQL	
+						- SHOW data_directory; 
+					- Para mostrar espacios de tablas, es la siguiente sentencia SQL	
+						- SELECT * FROM pg_catalog.pg_tablespace;
+						- SELECT * FROM pg_class ;
+					- observar que también hay dos tablespaces particulares:
+						-pg_default: espacio de tabla predeterminado correspondiente a "ninguno", todos los objetos almacenados directamente en el directorio PGDATA
+						- pg_global: es el espacio de tabla utilizado para los objetos de todo el sistema
+	-- Exploración de archivos de configuración y parámetros
+		- El archivo de configuración principal de PostgreSQL es postgresql.conf, un archivo basado en texto que controla el clúster cuando se inicia.
+		- Para cambiar la configuracion del cluster, se debe editar el archivo mencionado anterirmente, para escribir la nueva configuración
+		- Volver a cargar serivcio o reinciarlo
+		- Cada parámetro de configuración está asociado con un contexto y, según el contexto, puede aplicar cambios con o sin un reinicio del clúster.
+			- internal: parámetros que se establecen en tiempo de compilación y, por lo tanto, no se pueden cambiar en tiempo de ejecución
+			- postmaster: parámetros que requieren que se reinicie el clúster (es decir, matar el proceso postmaster y volver a iniciarlo) para activarlos.
+			- sighup: parámetros de configuración que se pueden aplicar con una señal SIGHUP enviada al proceso postmaster , lo que equivale a emitir una señal de recarga en el administrador de servicios del sistema
+			- backend and superuser-backend: parámetros que se pueden configurar en tiempo de ejecución pero que se aplicarán a la siguiente conexión normal o administrativa
+			- user and superuser: configuraciones que se pueden cambiar en tiempo de ejecución y se activan inmediatamente para una conexión normal y administrativa
+			- El archivo postgrsql.auto.conf tiene la misma sintaxis del archivo principal postgresql.conf , pero PostgreSQL lo sobrescribe automáticamente cuando se cambia la configuración en tiempo de ejecución ALTER SYSTEM.
+			- (pg_hba.conf) archivo de texto que contiene la asignación de conexión: enumera las bases de datos, los usuarios y las redes que pueden conectarse a su clúster
+56
