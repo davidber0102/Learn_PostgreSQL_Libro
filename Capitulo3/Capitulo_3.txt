@@ -4,9 +4,67 @@
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
 ----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
---- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+---------------------Capítulo 3: Gestión de usuarios y Conexiones
+
+/***********************Aprenderás**********************************************
+- Los conceptos detrás de usuarios, grupos y roles.
+- Cómo administrar usuarios y grupos de PostgreSQL
+- Cómo administrar las conexiones entrantes a las bases de datos
+*********************************************************************************/
+/************************* Necesitas saber*****************************************
+- conocimientos básicos de Unix
+- interacción y conectividad básica de PostgreSQL
+**********************************************************************************/
+---------------------------------------------------------------------------------------
+		- Para poder interactuar con una base de datos en el clúster, debe tener al menos un usuario.
+		- Un único usuario administrador (denominado postgres)
+		- Es mejor crear diferentes usuarios con diferentes propiedades y privilegios
+		- Estructura de administración de usuarios muy rica
+--- Introducción a los usuarios y grupos
+		- Para poder acceder y conectarse de forma interactiva con un base de datos alamacenada en postgresql, se debe tener credeneciales de inicio de sesion
+		- ademas de contar con los permisos para poder conectarse a una base en especifico
+		- Son similares cuando accedes a un sistema operativo (nombre de ususario y contraseña)
+		- Un rol puede ser una cuenta o un grupo de cuentas o ambas.
+		- Cada rolo debe tener un nombre unico, nombre de usuario.
+		- Un rol es la agrupacion de permisos a una base de datos.
+		- Un rol se define a nivel de cluster, unico nombre dentro de todo el cluster
+--- Gestión de roles
+		- Se puede pueden administrar mediante tres declaraciones SQL principales:
+			- CREATE ROLE para crearun rol desde cero
+			- ALTER ROLE para cambiar algunas propiedades del rol (por ejemplo, la contraseña deinicio de sesión)
+			- DROP ROLE para eliminar un rol existente.
+		- El rol de superusuario postgres en un inicio puede usarse para ejecutar cestas consultas
+		- El nombre del rol debe ser único en todo el sistema, lo que significa que no puede tener dos roles diferentes con nombres idénticos, y debe constar de letras, dígitos y algunos símbolos, como guiones bajos.
+	-- Creando nuevos roles
+			- Se debe ocupar lo siguiente CREATE ROLE y tiene la siguiente sinopsis y requiere parametros obligatorios que en este caso el es nombre de usuario del rol
+				+ CREATE ROLE name [ [ WITH ] option [ ... ] ]
+					- Delcaracion de contraseña
+					- Delcaracion de capacidad de inicio de sesiosn
+					- Delcaracion de privilegios de superusuario.
+			- Recuerde que en postgresql se puede tener tantos superusuarios como desse.
+			- Una ves creado el usuari o rol, y por algun motivo se dbe cambiar alguna opcion del rol ya creado
+				- Interviene ALTER ROLE
+					- permite (como superusuario del clúster) modificar un rol existente sin tener que descartarlo y volver a crearlo.
+		-- Contraseñas de roles, conexiones y disponibilidad
+			- La conexion mediante un usuario/rolm es mediante autentificasion en postgresql.
+			- Principales opciones que el porgrama permite manipular y admonostrar para el inicio de sesion
+				- PASSWORD or ENCRYPTED PASSWORD: lmacena contraseñas de roles en forma cifrada,
+				- PASSWORD NULL: fuerza explícitamente una contraseña nula (no vacía), lo que impide que el usuario inicie sesión con cualquier contraseña.
+				- CONNECTION LIMIT <n>: permite al usuario abrir no más de <n> conexiones simultáneas al clúster
+				- VALID UNTIL: le permite especificar un instante (en el futuro) en el que caducará el rol.
+			- La siguiente sentencia crea un rol, con su contraseña pero no permitira que inicio sesion en el cluster	
+				+ CREATE ROLE luca WITH PASSWORD 'xxx';
+				- La opción predeterminada es NOLOGIN
+			- Sin encambio para definiri usuarios interactivos, recuerde agregar la opcion LOGIn al momneto de crear el usuario/rolm
+				+ CREATE ROLE luca WITH LOGIN PASSWORD 'xxx';
+			- la siguiente sentencia es similiar a ala anterior, se puede escribir de varias formas y en cualquier orden
+				+ CREATE ROLE luca WITH PASSWORD 'xxx' LOGIN;
+	-- Uso de un rol como grupo
+	-- Eliminación de un rol existente
+	-- Inspeccionar roles existentes
+--- Administrar las conexiones entrantes a nivel de rol
+	-- La sintaxis de pg_hba.conf
+	-- Orden de reglas en pg_hba.conf
+	-- Fusión de varias reglas en una sola
+	-- Uso de grupos en lugar de roles individuales
+	-- Uso de archivos en lugar de roles individuales
