@@ -112,17 +112,83 @@
 			- El archivo pg_hba.conf contiene el cortafuegos para las conexiones entrantes
 			- La estructura dentro del archivo es la siguiente:
 				+ <connection-type> <database> <role> <remote-machine> <auth-method>
-			- <connection-type> 
-			- <database> conexión compatible con PostgreSQL : 
+			- <connection-type> conexión compatible con PostgreSQL : 
 				* 1- local: a través de sockets del sistema operativo
 				* 2. host: conexión TCP/IP
 				* 3. hostssl: conexión cifrada TCP/IP
-			- <role> 
-			- <remote-machine> 
-			- <auth-method>
-				
+			- <database>  nombre de una base de datos
+				- all, todas las bases de datos disponibles
+			- <role>  nombre de usuario del rol específico
+				- all, lo que significa todos los roles disponibles.
+			- <remote-machine>  nombre de host, la dirección IP o la subred
+				- all cualquier control remoto máquina desde la que se establece la conexión
+			- <auth-method> dicta cómo se debe manejar la conexión Los métodos principales son
+				- scram-sha-256: método más robusto, disponible desde PostgreSQL 10
+				- md5: método utilizado en versiones anteriores
+				- reject: rechazar siempre la conexión
+				-trust: aceptar siempre la conexión sin tener en cuenta lo proporcionado
+				- el siguiente es un extracto de pg_hba.conf
+					+ host all luca carmensita scram-sha-256  
+						// el usuario luca puede conectarse a todas las bases de datos dentro del clúster
+						// procedente de un host denominado carmensita
+						// debe proporcionar un nombre de usuario/contraseña válido para verificar el SCRAM
+					+ hostssl all test 192.168.222.1/32 scram-sha-256
+						//El usuario teesy puede conectarse a todas las bases de datos del sistema a través de una conexión encriptada SSL
+						//solo desde una máquina que tenga la dirección IPv4 de 192.168.222.1;
+						// as credenciales deben pasar el método de autenticación SCRAM.
+					+ host digikamdb pgwatch2 192.168.222.4/32 trust
+						// el acceso a la base de datos digikamdb se otorga solo al usuario pgwatch2
+						// de una conexión no cifrada desde el host 192.168.222.
+						// se otorga el acceso (trust) sin necesidad de ninguna credencial.
+					+ host digikamdb enrico carmensita reject
+						// rechaza cualquier conexión entrante del host llamado carmensita
+						// enrico no puede conectarse a digikamdb desde el host carmensita
+				- El método de autenticación trust nunca debe usarse; permite que cualquier rol se conecte a la base de datos
 		-- Orden de reglas en pg_hba.conf
+			- Se aplica la primera regla que satisface la lógica y se saltan las demás. 
+			- Entender la logica, y las restricciones ponerlas primero si son prioridad
 		-- Fusión de varias reglas en una sola
+			- Una línea declara al menos una regla, pero es posible fusionar varias líneas en una sola
+			- los campos de rol, base de datos y máquina remota permiten la definición de múltiples coincidencias
+				- separada por una , (coma).
+			- EJEMPLO
+				- dar acceso a los roles luca y enrico
+				-  desde la misma red
+				- las bases de datos forumdb y digikamdb
+					+ host forumdb luca samenet scram-sha-256
+					+ host forumdb enrico samenet scram-sha-256
+					+ host digikamdb luca samenet scram-sha-256
+					+ host digikamdb enrico samenet scram-sha-256
+				- PERO TAMBIEN PUED QUEDAR ASI EN MENOS LIENAS DENTRO DEL ARCHIVO
+					+ host forumdb,digikamdb luca samenet scram-sha-256
+					+ host forumdb,digikamdb enrico samenet scram-sha-256
+				- Podemos reducir las reglas un paso más,
+					+ host forumdb,digikamdb luca, enrico samenet scram-sha-256
+				- si más reglas tienen el mismo método de autenticación Y protocolo de conexión, entonces es posible colapsarlas en una agregación
 		-- Uso de grupos en lugar de roles individuales
-		
+			- en el parametro de rol dentro del archivo de configuracion, se puede sustituir por el nombre de un grupo , 
+				- Para que la regla sea valida para todos los mientos del grupo, debe anteponer el signo mas +
+					- EJEMPLO
+						- del grupo forum_stats que incluye al miembro luca
+						- La siguiente regla no permitirá que el rol de luca acceda a la base de datos forumdb
+							+ host forumdb forum_stats all scram-sha-256
+							- El acceso ak usuaru se negara por la capacidad de LOGIN
+						- si indicamos claramente que queremos usar el rol forum_stat como nombre del grupo
+							+ host forumdb +forum_stats all scram-sha-256
+								- permitir a todos sus miembros, la conexión puede establecerse por cualquier rol que sea miembro del grupo, incluido luca
+				- ¿Qué sucede si queremos permitir que todos los miembros del grupo, excepto uno, accedan a la base de datos?
+					- para permitir que todos los miembros del grupo forum_stats accedan a la base de datos y evitar que se conecte el único rol de luca , puede usar lo siguiente:+
+						+ host forumdb luca all reject
+						+ host forumdb +forum_stats all scram-sha-256
 		-- Uso de archivos en lugar de roles individuales
+			- una regla también se puede especificar como un archivo de texto, eparados por líneas o comas.
+			- Para realizarolo mediante un archivo en el parametro de rolo se ante pone el signo de arroba @,y se interpreta como archivo
+			- EJEMPLO 
+				- rechazar las conexiones a todos los usuarios y grupos enumerados en el archivo added_users.txt,
+				- mientras se permite la conexión a todos los nombres de usuario y grupos especificados en el archivo allow_users.txt
+					+ host forumdb @rejected_users.txt all reject
+					+ host forumdb @allowed_users.txt all scram-sha-256
+			- es posible especificar el contenido del archivo como una lista de nombres de usuario separados por líneas o como una lista separada por comas.
+			- deL MISMO MODO CON GRUPO ANTEPONIENDO EL ARROBA EN EL ARCHIVO
+			72
+			
