@@ -59,12 +59,70 @@
 				+ CREATE ROLE luca WITH LOGIN PASSWORD 'xxx';
 			- la siguiente sentencia es similiar a ala anterior, se puede escribir de varias formas y en cualquier orden
 				+ CREATE ROLE luca WITH PASSWORD 'xxx' LOGIN;
+			- VALID UNTIL definir una fecha o incluso una marca de tiempo y que permitira caducará la contraseña del rol y ya no se le permitirá iniciar sesión en el clúster
+				+ CREATE ROLE luca WITH LOGIN PASSWORD 'xxx' VALID UNTIL '2020-12-25 23:59:59';
 	-- Uso de un rol como grupo
+		- Un grupo es un rol que contiene otros roles.
+		- Para crear un GRUPO es necesario:
+			- crear un rol sin la opción LOGIN y luego agregar todos los miembros uno tras otro
+		- IN ROLE: se debe incluir en la sentencia para crear un rol como miembro de un grupo especifico
+			+ CREATE ROLE book_authors WITH NOLOGIN;
+			+ CREATE ROLE luca WITH LOGIN PASSWORD 'xxx' IN ROLE book_authors;
+			+ CREATE ROLE enrico WITH LOGIN PASSWORD 'xxx'IN ROLE book_authors;
+		- GRANT: agregar miembros a un grupo
+			- GRANT ROLE book_authors TO enrico;
+		- Cada grupo puede tener uno o más miembros administradores
+		- ADMIN: Permite a un usuario especificar el miembro que se asociará como administrador del grupo recién creado
+			+ CREATE ROLE book_reviewers WITH NOLOGIN ADMIN luca;
+		- WITH ADMIN OPTION: permite la pertenencia a un rol con privilegios administrativos.
+			+ GRANT book_reviewers TO enrico WITH ADMIN OPTION;
 	-- Eliminación de un rol existente
+		- DROP ROLE: eliminar un rol existente
+			+ DROP ROLE [ IF EXISTS ] name [, ...]
+		- Para ser eliminado, el rol debe existir; por lo tanto, si intenta eliminar un rol inexistente, recibirá un error:
+			+ DROP ROLE this_role_does_not_exists;
+			+ ERROR: role "this_role_does_not_exists" does not exist
+		- ¡PostgreSQL se protegerá de sus errores y hace un muy buen trabajo al mantener sus datos seguros!
+			+ DROP ROLE + IF EXISTS mpide que PostgreSQL se queje de la eliminación de un rol que falta:
+				+ DROP ROLE IF EXISTS this_role_does_not_exists;
+				+ NOTICE: role "this_role_does_not_exists" does not exist, skipping  DROP ROLE
+					-muestra un aviso sobre el  hecho de que el rol no existe
+				+ IF EXISTS: La idea es evitar reportar un error cuando no está interesadoen detectarlo
+		- eliminar un grupo no afecta a sus miembros
 	-- Inspeccionar roles existentes
+		- Hay diferentes formas de obtener información sobre los roles existentes y todas se basan en los catálogos de PostgreSQL
+			+ SELECT current_role;
+		- El comando \du nos ayuda a obtener información sobre los roles existentes y sus propiedades
+			+ SELECT * FROM pg_roles;
+		- En la columna Login, se puede observar si se impide que un rol se conecte de forma interactiva al clúster
+		- Puede obtener información sobre un rol específico consultando directamente el catálogo pg_roles
+			+ SELECT rolname, rolcanlogin, rolconnlimit, rolpassword FROM pg_roles WHERE rolname = 'luca';
+				- contraseña no se muestra por razones de seguridad siempre se almacenan encriptadas.
+		- pg_authid representa la columna vertebral de la información de pg_roles y se puede consultar con la misma declaración, pero informa la contraseña del usuario (como texto encriptado).
+			+ SELECT rolname, rolcanlogin, rolconnlimit, rolpassword FROM pg_authid WHERE rolname = 'luca';
+			- La contraseña se representa como un hash y la parte inicial especifica el algoritmo de cifrado utilizado: MD5.
 --- Administrar las conexiones entrantes a nivel de rol
-	-- La sintaxis de pg_hba.conf
-	-- Orden de reglas en pg_hba.conf
-	-- Fusión de varias reglas en una sola
-	-- Uso de grupos en lugar de roles individuales
-	-- Uso de archivos en lugar de roles individuales
+	- para la propiedad LOGIN  al crear un rol no es suficiente para que abra una nueva conexión a cualquier base de datos dentro del clúster
+	- PostgreSQL verifica la solicitud de conexión entrante con una especie de tabla de firewall,
+	- Cada modificacion realizadan dentro del archivo pg_hba.conf , se debe indicar que el cluster vuelva a cargar nuevas reglas atraves de l reinicio del serivicio
+	- Esto se define dentro del archivo pg_hba.conf
+		+ En linux $ sudo -u postgres pg_ctl reload -D $PGDATA
+		+ En windows ir a los Servicios del sistema, buscar y localizar el correspondiente  a postgresql y reiniciar 		
+		-- La sintaxis de pg_hba.conf
+			- El archivo pg_hba.conf contiene el cortafuegos para las conexiones entrantes
+			- La estructura dentro del archivo es la siguiente:
+				+ <connection-type> <database> <role> <remote-machine> <auth-method>
+			- <connection-type> 
+			- <database> conexión compatible con PostgreSQL : 
+				* 1- local: a través de sockets del sistema operativo
+				* 2. host: conexión TCP/IP
+				* 3. hostssl: conexión cifrada TCP/IP
+			- <role> 
+			- <remote-machine> 
+			- <auth-method>
+				
+		-- Orden de reglas en pg_hba.conf
+		-- Fusión de varias reglas en una sola
+		-- Uso de grupos en lugar de roles individuales
+		
+		-- Uso de archivos en lugar de roles individuales
