@@ -3,10 +3,56 @@
 ****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
-----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
+----------------------------------Sección 2: Interactuando con la Base de datos----------------------------------------------------
+---------------------Capítulo 4: Declaraciones básicas
+- comandos lenguaje de definición de datos (DDL)
+	- se usan para administrar bases de datos y tablas
+- comandos de lenguaje de manipulación de datos (DML)
+	- Se usan para insertar, eliminar, actualizar y seleccionar datos dentro de las bases de datos
+- Entrono de consola PSQL - entorno de shell de PostgreSQL
+- psql siempre está presente instalación de PostgreSQL
 --- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+	- Buscar dentro de GitHub repositorio para algun apoyo extra en cuestiones de comandos sql o psql
+--- Configuración de nuestro entorno de desarrollo
+	- Conectaremos a una base de datos en la consola psql dentro de la instalacion de PostgreSQL
+		- Paso 1: Inicializamos la consola dentro de la ruta de instalacion para esto es en Windows
+			- \Program Files\PostgreSQL\17\bin
+			- cmd
+			- psql -U postgres
+		- Paso 2
+			- \x para activar el modo extendido
+		- Paso 3
+			- \l para listar las base de datos creadas dentro del cluster
+		- Paso 4
+			- \c nombre de la base de datos - conéctese a la base
+			- \c postgres	
+				- Ahora está conectado a la base de datos «postgres» con el usuario «postgres».
+--- Creación y gestión de bases de datos.
+	-- Creando una base de datos
+		- Para crear una base de datos desde cero, se debera ejecutar el siguiente comando
+			- CREATE DATABASE databasename;
+			- CREATE DATABASE forumdb;
+		- SQL es un lenguaje que no distingue entre mayúsculas y minúsculas, por lo que podemos escribir todos los comandos con letras mayúsculas o minúsculas.
+		- Dentras en las entrañas de PostgreSQL, se realiza los siguientes pasaso cuando se craa una nueva base de datos
+			- Realiza una copia física de la base de datos de plantillas, template1
+			- Asigna el nombre de la base de datos a la base de datos recién copiada
+	-- Administrar bases de datos
+			- Administrar bases de datos, enumerar todas las bases de datos presentes en un clúster, crear una base apartir de otra, descartar una base de datos
+		-- Listado de todas las bases de datos
+			- Se usaria la consola de psql, en el siguiente comando se podran lostar todas las tablas presentes en la bd
+			- \d
+		-- Creación de una nueva base de datos a partir de una plantilla modificada
+			- Conéctese a la base de datos template1
+				- \c template1
+			- Cree una tabla llamada dummytable dentro de la base de datos template1
+				- create table dummytable (dummyfield integer not null primary key);
+				- el comando \d para mostrar una lista de tablas
+					- aparecera la tabla que recien creamos
+					96
+			- Cree una nueva base de datos llamada dummydb.
+	-- Descartar tablas y bases de datos
+	-- Hacer una copia de la base de datos
+	-- Confirmación del tamaño de la base de datos
+	-- Creando una base de datos
+--- Gestión de tablas
+--- Comprender las declaraciones básicas de manipulación de tablas
