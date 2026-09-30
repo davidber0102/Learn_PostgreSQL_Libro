@@ -43,16 +43,56 @@
 			- \d
 		-- Creación de una nueva base de datos a partir de una plantilla modificada
 			- Conéctese a la base de datos template1
-				- \c template1
+				- \c ○\dt
 			- Cree una tabla llamada dummytable dentro de la base de datos template1
 				- create table dummytable (dummyfield integer not null primary key);
 				- el comando \d para mostrar una lista de tablas
 					- aparecera la tabla que recien creamos
-					96
+				- crear una nueva base de datos llamada dummydb y hagamos una lista de todas las tablas en la base de datos dummydb
+					- create database dummydb;
+					- \c dummydb
+					- \d listamos las tabla dentro de esta bd
+			- Es importante recordar que cualquier cambio realizado en la base de datos template1 estará presente en todas las bases de datos creadas después de este cambio
 			- Cree una nueva base de datos llamada dummydb.
 	-- Descartar tablas y bases de datos
+			- DROP TABLE: Esto se usa para borrar una tabla en la base de datos.
+			- DROP DATABASE: Esto se utiliza para eliminar una base de datos en el clúster.
+				
+		- Descartar tablas
+			- el comando necesario para descartar una tabla es simplemente DROP TABLE + nombre de la tabla
+			- Para hacer esto, debemos conectarnos a la base de datos a la que pertenece la tabla y luego ejecutar el comando
+				- \c template1
+				- drop table dummytable;
+		- Descartar bases de datos
+			- el comando necesario para eliminar una tabla es simplemente DROP DATABASE + nombre de la base de datos
+				- drop database dummydb ;
 	-- Hacer una copia de la base de datos
+		- crear una base de datos nueva a partir de una base de datos de plantilla:
+			- Haga una copia de la base de datos forumdb en el mismo clúster de PostgreSQL
+				- create database forumdb2 template forumdb;
+					- Lstá diciendo a PostgreSQL que cree una nueva base de datos llamada forumdb2 utilizando la base de datos forumdb como plantilla
 	-- Confirmación del tamaño de la base de datos
-	-- Creando una base de datos
---- Gestión de tablas
+			- determinar el tamaño real de una BD Hay dos métodos que puede usar para hacer esto: psql y SQL
+		- método psql
+			- Podemos verificar el tamaño de la base de datos
+			- \x modo expandido
+			- \l+ forumdb lista las prpiedas apmpliadas de las bads
+		- método sql
+			- si solo tenemos acceso de instalación del lado del servidor pgadmin4
+				- select pg_database_size('forumdb');
+					- función pg_database_size(name) devuelve el espacio en disco utilizado por la BD
+					- el resultado es el número de bytes utilizados apra la BD
+				- un resultado más legible
+					- select pg_size_pretty(pg_database_size('forumdb'));
+	-- Creando una base de datos (DETRAS DE ESCENA)
+		- Relaciones que existen entre lo que realizamos a nivel de SQL y lo que sucede físicamente en la maquina
+			- select * from pg_database where datname='forumdb';
+				- nos da toda la información sobre la base de datos forumdb
+				+ identificador de objeto (OID), número que identifica de forma única la base de datos
+				- vaya all direcotrio
+					- C:\Program Files\PostgreSQL\13\data\base
+					- Describe con el OID Y EL NOMBRE DE LA BASE DE DATOS QUE ESTA EN LA CONSULTA REALIZADA ANTERIOMENTE, COICIDE, AQUI NO DICE EL NOMBRE PERO SE ENLAZA CON EL oOID
+--- Gestión de tablas 102
+	-- La opción EXISTS
+	-- Gestión de tablas temporales
 --- Comprender las declaraciones básicas de manipulación de tablas
