@@ -92,7 +92,143 @@
 				- vaya all direcotrio
 					- C:\Program Files\PostgreSQL\13\data\base
 					- Describe con el OID Y EL NOMBRE DE LA BASE DE DATOS QUE ESTA EN LA CONSULTA REALIZADA ANTERIOMENTE, COICIDE, AQUI NO DICE EL NOMBRE PERO SE ENLAZA CON EL oOID
---- Gestión de tablas 102
+--- Gestión de tablas
+	- PostgreSQL tiene tres tipos de tablas:
+		- Tablas temporales(Temporary tables): muy rápidas, visibles solo para el usuario que las creó
+		- Tablas no registradas(Unlogged tables:):muy rápidas para ser utilizadas como TABLAS de apoyo comunes a todos
+		- Tablas registradas(Logged tables:): tablas regulares
+		- crear una tabla de usuario desde cero:
+			- Cree una nueva base de datos
+				+create database forumdb2;
+			- Cambie ala nueva base con el siguiente
+				+ \c forumdb21
+				+ CREATE TABLE public.user(pk_ integer GENERATED ALWAYS AS IDENTITY, username text NOT NULL, gecos text,email text NOT NULL, PRIMARY KEY(pk_), UNIQUE (username));
+				- El comando GENERADO COMO IDENTIDAD, asigna automáticamente un valor único a una columna.
+				- se creó en la base de datos usando el comando /d
+					+ \d user
+				- el siguiente comando para eliminar una tabla	
+					+drop table public.user;
 	-- La opción EXISTS
+		- Se utiliza con los comandos de creación o eliminación de entidades para comprobar si el objeto ya existe o no.
+			+ CREATE TABLE IF NOT EXISTS public.users(pk_ integer GENERATED ALWAYS AS IDENTITY, username text NOT NULL, gecos text,email text NOT NULL, PRIMARY KEY(pk_), UNIQUE (username));
+		- solo creará la tabla de usuarios si la tabla de usuarios aún no existe
+		- El commando DROP funciona de manera similar
+			+ drop table if exists public.user;
+			- eliminará la tabla de usuarios si la tabla de usuarios existe en la base de datos
 	-- Gestión de tablas temporales
+		- una sesión es un conjunto de transacciones, cada sesión está aislada y que una transacción está aislada de todo lo demás
+		- temp: es una estructura de datos que sea visible solo dentro de la transacción que se está ejecutando.
+			- tabla visible: tenerla solo en la sesión donde fue creada
+				+ create temp table if not exists temp_users(pk int GENERATED ALWAYS AS IDENTITY, username text NOT NULL, gecos text, email text NOT NULL, PRIMARY KEY( pk ), UNIQUE ( username ));
+			- tabla visible en la misma transacción donde fue creada. una tabla visible solo dentro de nuestra transacción
+				- inicie una nueva transacción.
+					+ begin work;
+				- Cree la tabla temp_users.
+					+ create temp table if not exists temp_users(pk int GENERATED ALWAYS AS IDENTITY, username text NOT NULL, gecos text, email text NOT NULL, PRIMARY KEY( pk ), UNIQUE ( username ))on commit drop;
+					+ Verificamos  que la tabla esté presente dentro de la transacción y no fuera de ella
+						- \d temp_users;
+				- Comprometer o deshacer la transacción iniciada en el punto uno
+					- Puede ver la estructura de la tabla temp_users
+						- commit work;
+	-- Gestión de tablas no registradas
+		- las tablas no registradas son mucho más rápidas que las tablas clásicas (también conocidas como tablas registradas),
+		- la consistencia de los datos no está garantizada en caso de falla.
+			+ create unlogged table if not exists unlogged_users
+			- alternativa rápida a las tablas permanentes y temporales
+			- aumento de rendimiento se produce a expensas de la pérdida de datos
+		-- Creando una tabla 
+			- detrás de escena cuando se crea una nueva tabla
+			- para las tablas PostgreSQL asigna un identificador de objeto llamado OID
+			- pg_class: recopila información sobre todas las tablas que están presentes en la base de datos
+				+ select oid,relname from pg_class where relname='use';
+				- oid es el campo identificador del objeto
+				- la base de datos forumdb se almacena en el directorio 21824
+				- En PostgreSQL, cada tabla o índice se almacena en uno o más archivos
 --- Comprender las declaraciones básicas de manipulación de tablas
+		- comprender cómo insertar, ver, modificar y eliminar datos en las tablas.
+	-- Inserción y selección de datos.
+		- INSERTAR: comando utli paraeste prcedimiento
+		-  lo definimos inserta nuevas filas en una tabla
+		- pueden ser una o muchas filas 
+		- Insertar nuev usuario en tabla usuaris
+			+ insert into public.users (username,gecos,email) values('myusername','mygecos','myemail');
+				- muestra que PostgreSQL ha insertado un registro en la tabla de users
+			+ select * from users;
+				- ver el registro que acabamos de introducir en la tabla
+				- El valor * especifica todos los campos presentes
+				- Es igual a select pk,username,gecos,email from users;
+			+ Insertamos nuevo valor
+				- insert into public.users (username,gecos,email) values('scotty','scotty_gecos','scottu_myemail');
+		- Queremos ordenar regitross por el nombre de usuarui
+			+ select pk,username,gecos,email from users order by username;
+			- El lenguaje SQL, sin la opción ORDER BY , no devuelve los datos de manera ordenada
+			+ select pk,username,gecos,email from users order by 2;
+			/ PostgreSQL también acepta posiciones de campo en una consulta como opciones de clasificación.
+			/ insertar varios registros usando una declaración de una sola fila
+				+ insert into categories (title,description) values('apple', 'fruits'), ('orange','fruits'),('lettuce','vegetable');
+				+ select * from categories;
+			/ si queremos seleccionar solo las tuplas donde la descripción es igual a vegetal, utilice la condición WHERE
+				+ select * from categories where description ='vegetable';
+			/ La condición where filtra en uno o más campos de la tabla
+				/ buscar todos aquellos temas con título  ígual naranja y descripción  frutas
+					+ select * from categories where description ='fruits' and title='orange';
+				- ASC o DESC ordenan la consulta en orden ascendente o descendente; si no se especifica nada, ASC es el valor predeterminado
+	-- valores NULOS
+		- Nulo (o NULL) es un marcador especial que se usa en el lenguaje de consulta estructurado para indicar que un valor de datos no existe en la base de datos.
+		- Ejercicio de emplo de Null en PostgreSQL
+			- PRIMERO INSERTAMOS UNA TUPLA
+				+ insert into categories (title) values ('lemon');
+			- tabla de categorías 
+				+ select * from categories;
+			- seleccionar todas las tuplas en las que no está presente la descripción
+				+ select * from categories where description ='';
+			- PostgreSQL no devuelve ninguna tupla. Esto sucede porque la última inserción ha ingresado un valor NULL en el campo de descripción
+				+ ver los valores NULL presentes en las tablas
+				+ \pset null NULL
+			- le dice a psql que muestre valores NULL que están presentes en la tabla como NULL
+			- ver todos los registros que tienen valores NULL en la descripción 
+				+ select title,description from categories where description is null;
+					- busca todas las tuplas para las que no hay valor en el campo
+			- buscaremos todas las tuplas para las que haya un valor
+				+ select title,description from categories where description is not null;
+		- Para realizar búsquedas en campos NULL , tenemos que usar los operadores IS NULL / IS NOT NULL. La cadena vacía es diferente de un valor NULL.
+	-- Ordenar con valores NULL
+		- ordenar una tabla donde hay valores NULL
+		- insertemos otra tupla en la tabla 
+			+ insert into categories (titke,description) values ('apricot','fruits');
+			+ select * from categories order by description NULLS last;
+				- se ordena el campo description dejando al ultimo los nulos
+			+ select * from categories order by description;
+		- colocar valores NULL al principio
+			+ select * from categories order by description NULLS first;
+			acción predeterminada para las consultas de tipo ORDER BY es: ORDER BY NULLS LAST
+	-- Crear una tabla a partir de otra tabla
+		- nueva tabla utilizando datos de otra tabla
+		- crear una tabla temporal con los datos presentes en la tabla de categor
+			+ create temp table temp_categories as select * from categories;
+				- crea una tabla temp_data con la misma estructura de datos y datos que la tabla  categorías
+			- select * from temp_categories ;
+	-- Actualizando datos
+		- cambiar el valor de apricot al valor de durazno
+			+ update temp_categories set title='peach' where pk = 14;
+		- cambiar el valor del título de todas las líneas para las que el el valor de descripción es vegetal
+			+ update temp_categories set title = 'lrmon' where description = 'vegetable'
+		- tener cuidado al usar el comando ACTUALIZAR, en modo de confirmación automática, no hay posibilidad de volver atrás una vez que se completa la actualización
+	-- Eliminación de datos
+		- eliminar todos los registros en la tabla temp_categories que tienen pk=10
+			+ delete from temp_categories where pk=10;
+		- eliminar todas las filas que tienen un valor de descripción igual a NULL
+			+ delete from temp_categories where description is null;
+		- eliminar todos los registros de una tabla
+			+ delete from temp_categories ;
+				- este comando: ¡se eliminarán todos los registros presentes en la tabla!
+			- tabla temp_categories está vacía
+		- cargar todos los datos de la tabla de categorías a la tabla temp_categories
+			+ insert into temp_categories select * from categories;
+		- Otra forma de eliminar datos es usando el comando TRUNCATE
+			- eliminar todos los datos de una tabla sin proporcionar una condición
+			+ truncate table temp_categories ;
+				- TRUNCATE elimina todos los datos de una tabla
+		- TRUNCATE elimina todos los registros en una tabla similar al comando DELETE .
+		- En el comando TRUNCATE , no es posible usar condiciones WHERE .
+		- El comando TRUNCATE elimina registros mucho más rápido que el comando DELETE .

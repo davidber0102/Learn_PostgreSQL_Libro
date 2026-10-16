@@ -3,10 +3,24 @@
 ****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
-----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
---- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+----------------------------------Sección 2: Interactuando con la Base de datos----------------------------------------------------
+---------------------Capítulo 5: Estados de cuenta avanzados
+--- Explorando la instrucción SELECT
+	-- Usando la cláusula like
+	-- Usando ilike
+	-- Usando distinct
+	-- Usando limit and offset
+	-- Uso de subconsultas
+		-- Usando la condición IN/NOT IN
+		-- Uso de la condición EXISTE/NO EXISTE
+	-- Learning joins
+		-- INNER JOIN
+		-- LEFT JOINS
+		-- RIGHT JOIN
+		-- FULL OUTER JOIN
+		-- SELF JOIN
+	-- Funciones agregadas
+		-- UNION/UNION ALL
+		-- EXCEPT/INTERSECT
+--- UPSERT
+
