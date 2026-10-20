@@ -5,22 +5,195 @@
 ***************************************************************************************************************/
 ----------------------------------Sección 2: Interactuando con la Base de datos----------------------------------------------------
 ---------------------Capítulo 5: Estados de cuenta avanzados
+- Se desarrollaan y dar a entender instrucciones e manipilacion de datos ELECT/INSERT/UPDATE
 --- Explorando la instrucción SELECT
+		- El uso de la declaración SELECT es para filtrar conjuntos datos almacenados en bd
+		- se pueden utilizar condiciones de igualdad o condciones de mayot o menor que 
+			+ select * from categories where pk > 12 order by title;
+				- devuelve todos los registros que tienen pk> 12.
 	-- Usando la cláusula like
+		- COMO EJEMPLO = encontrar todos los registros que tienen un valor de campo de título que comienza con la letra 'a'.
+			+ select * from categories where title like 'a%';
+				- devuelve todos los registros que tienen un título que comienza con la LETRA a
+			+ select * from categories where title like '%e';
+				- Devuelve todos los registros con títulos que terminan con la letra e,
+			+ select * from categories where title like '%ap%';
+				- Se combiana los dos ejemplos anteriores y devolverá todos los registros cuyos títulos contengan la cadena ap.
+			+ select * from categories where title like 'A%';
+				- no arroja ningún resultado, al igual que las búsquedas distinguen entre mayúsculas y minúsculas
+		- Funcion UPPER(texto)- dada una cadena de entrada devuelve la misma con todos los caracteres en mayúsculas
+			+ select upper('orange');
+			- En PostgreSQL, es posible llamar a funciones sin escribir FROM.
+			+ select * from categories where upper(title) like 'A%';
+				- Devuelve todos los registros sin distinción entre mayúsculas y minúsculas,
 	-- Usando ilike
+		- En PostgreSQL, es posible realizar una consulta similar que no distinga entre mayúsculas y minúsculas mediante el uso del operador ILIKE
+			+ select * from categories where title ilike 'A%';
+				- forma de PostgreSQL de resolver el problema de consulta que no distingue entre mayúsculas y minúsculas
 	-- Usando distinct
-	-- Usando limit and offset
+		- función coalesce> dados dos o más parámetros, devuelve el primer valor que no es NULL
+			+ select coalesce(NULL,'test');
+				- devuelve prueba porque el primer argumento es NULL y el segundo argumento no es NULL.
+			+ select coalesce('orange','test');
+				- devuelve naranja porque el primer argumento no es NULL
+		- \pset null (NULL)
+			- MUESTRA visualmente el VALOR NULL 
+		+ select description,coalesce(description,'No description') from categories order by 1;
+			- la función coalesce transforma cualquier valor NULL en la cadena Sin descripción
+		+ select coalesce(description,'No description') as description from categories order by 1;
+			- En PostgreSQL, se puede asignar un alias a cualquier campo de una consulta
+			- Si queremos usar un alias con espacios o mayúsculas, tenemos que citar el alias usando "",
+				+ select coalesce(description,'No description') as "Description" from categories order by 1;
+		+ select distinct coalesce(description,'No description') as description from categories order by 1;
+			- Se utiliza select distinct y devueve solo valores distintos (diferentes), ordenación de datos para tablas grandes
+	-- Usando limit and offset 
+		- En PostgreSQL LIMIT es la forma de limitar la cantidad de filas devueltas por una consulta
+		- Mientras que offset es la forma de omitir una cantidad específica de filas devueltas por la consulta
+			- se usa para proporcionar a PostgreSQL la posición en el conjunto de resultados desde la cual comenzar a devolver datos
+			- Se pueden utilizar de forma independiente o en conjunto
+		+ select * from categories order by pk limit 1;
+			- devuelve solo el primer registro que hemos insertado
+		+ select * from categories order by pk limit 2;
+			- Devuelve los dos primeros registros que se insertaron
+		+ select * from categories order by pk offset 1 limit 1;
+			- Devuelve el segundo registro que se insertó
+		- Con LIMIT se puede crear una nueva tabla aparti de una existente 
+			+ create table new_categories as select * from categories limit 0;
+				- copiará en la tabla new_categories solo la estructura de datos de la tabla categorías.
+				- Como resultado SELECT 0, significa que no se han copiado datos en la tabla new_categories
+				- solo se ha replicado la estructura de datos
+					+ \d new_categories
+						- se observa la arquitecutra de la nueva tabla				
 	-- Uso de subconsultas
+			- se pueden describir como consultas anidadas: es donde podemos anidar una consulta dentrode otra consulta usando paréntesis. 
+			- pueden devolver un solo valor o un conjunto de registros al igual que las consultas normales.
 		-- Usando la condición IN/NOT IN
+			-- operador IN se usa dentro de la calusala WHERE en luga de usar varias condiciones OR
+				+ select * from categories where pk=10 or pk=11;
+				+ select * from categories where pk in (10,11);
+					- Ambas consultas dan el mismo resultaado, devuelven los registros con valor en pk igual a 10 o 1
+				+ select * from categories where not (pk=10 or pk=11);
+				+ select * from categories where pk not in (10,11);
+					- devuelve los registros que no tienen pk=10 o pk=11,
+			+ CREATE TABLE post(pk integer GENERATED ALWAYS AS IDENTITY, title text NOT NULL, content text,author INTEGER NOT NULL, category INTEGER NOT NULL,  PRIMARY KEY(pk));
+				+ insert into post(title,content,author,category) values('my orange','my orange is the best orange in the world',1,11);
+				+ insert into post(title,content,author,category) values('my apple','my apple is the best orange in the world',1,10);
+				+ insert into post(title,content,author,category,reply_to) values('Re:my orange','No! It''s my orange the best orange in the world',2,11,2);
+				+ insert into post(title,content,author,category) values('my tomato','my tomato is the best orange in the world',2,12);
+			+ select pk,title,content,author,category from posts;
+				- Devuelve Los registros presentes en la tabla post
+			+ select pk,title,content,author,category from posts where category in (select pk from categories where title ='orange');
+				- Devuelve todas las posts que pertenecen a la categoría naranja
+			+ select pk,title,content,author,category from posts where category not in (select pk from categories where title ='orange');
+				- Devuelve todos los valores de publicación que no pertenecen a la categoría naranja
 		-- Uso de la condición EXISTE/NO EXISTE
-	-- Learning joins
+			- se utiliza cuando queremos comprobar si una subconsulta devuelve (VERDADERO),
+			- la declaración NOT EXISTS se usa cuando queremos verificar si una subconsulta no volver (FALSO).
+			- las sentecias presentadas a continuacion dan el mismo resultado de las sentencias anterioes peo en ves de utilizar in y not in se utuliza exists
+			+ select pk,title,content,author,category from posts where exists (select 1 from categories where title ='orange' and posts.category=pk);
+			+ select pk,title,content,author,category from posts where not exists (select 1 from categories where title ='orange' and posts.category=pk);
+			- Tanto las consultas escritas con la condición IN como con la condición EXISTS se denominan consultas semijoin
+	-- Aprendiendo sobre joins
+			-- una unión es la combinación de filas de dos o más tablas
+			+ select c.pk,c.title,p.pk,p.category,p.title from categories c,posts p;
+				- Devuelve todas las combinaciones de las filas del tabla de categorías y las filas de la tabla de posts
+			- la consulta crea un producto cartesionado y este esultado se le puede llmar union cruzada
+			+ select c.pk,c.title,p.pk,p.category,p.title from categories c CROSS JOIN posts p;
+				- da como resultado lo mismo que la consulta anterior
 		-- INNER JOIN
+			- selecciona registros que tienen valores coincidentes en ambas tablas
+			- bucamos filtrar todas las filas que tienen el mismo valor que el campo de categoría (category.pk = posts.category).
+				+ select c.pk,c.title,p.pk,p.category,p.title from categories c,posts p where c.pk=p.category;
+				+ select c.pk,c.title,p.pk,p.category,p.title from categories c inner join posts p on c.pk=p.category;
+			-- Es preferible utilizar las condiciones JOIN siempre que sea posible en lugar de IN o EXISTS
+			-- se comportan mejor en cuanto a la velocidad de ejecución
 		-- LEFT JOINS
+			+ select c.*,p.category from categories c left join posts p on p.category=c.pk;
+				- devuelve todos los registros de la tabla de categorías y devuelve los registros coincidentes de la tabla posts
+					- El resultado es NULL de el lado derecho si no hay coincidencia
+			+ select c.* from categories c left join posts p on p.category=c.pk where p.category is null;
+				- buscar todas las categorías que no tienen publicaciones
 		-- RIGHT JOIN
+			- toma datos de la tabla derecha, invierte el orden de las tablas y utiliza una combinación derecha en lugar de una combinación izquierda
+			+ select c.*,p.category,p.title from posts p right join categories c on c.pk=p.category;
+			- RIGHT JOIN devuelve todos los registros de la tabla derecha (table2) todos los registros de la tabla de la izquierda (tabla1) que coincidan con la tabla de la derecha
 		-- FULL OUTER JOIN
+			- es la combinación de lo que tendríamos si juntamos la combinación derecha e izquierda
+			- se crearon dos nuevas tablas y se insertaron dato para pode llevar acabo el ejerccio para este tipo de join
+			- devuelve todos los registros que tienen publicaciones y etiquetas
+		-- ¿Cuál es la diferencia entre una combinación completa y una combinación cruzada?
+		-- una combinación externa completa es diferente de una combinación cruzada porque una combinación cruzada hace una cartesiana producto de todos los registros presentes en las tablas
 		-- SELF JOIN
+			- Una unión automática es una unión normal, pero la tabla se une consigo misma
+			- Supongamos que quisiéramos encontrar todas las publicaciones que pertenecen al autor 2 que tienen la misma categoría autor 1 y 2 
+				+ select distinct p1.title,p1.author,p1.category from posts p1 where p1.author=1;
+				+ select distinct p2.title,p2.author,p2.category from posts p2 where p2.author=2;
+			- Se deben usar alias para los nombres de las tablas cuando se realiza una unión automática,
+				+ select distinct p2.title,p2.author,p2.category from posts p1,posts p2 where p1.category=p2.category and p1.author<>p2.author and p1.author=1 and p2.author=2;
+				+ select distinct p2.title,p2.author,p2.category from posts p1 inner join posts p2 on ( p1.category=p2.category and p1.author<>p2.author) where p1.author=1 and p2.author=2;
 	-- Funciones agregadas
+			- realizan un cálculo en un conjunto de filas y devuelven una sola fila
+			- PostgreSQL proporciona todas las funciones agregadas de SQL estándar:
+				- AVG(): Esta función devuelve el valor promedio
+				- COUNT(): esta función devuelve el número de valores
+				- MAX(): Esta función devuelve el valor máximo.MAX(): Esta función devuelve el valor máximo.
+				- MIN(): Esta función devuelve el valor mínimo.
+				- SUM(): Esta función devuelve la suma de valores.
+			-- Las funciones agregadas se utilizan junto con la cláusula GROUP BY
+				- Misma que divide un conjunto de resultados en grupo s de filas y l funciones gregadas relizan calculos sobre ellas
+		+ 	select category,count(*) from posts group by category;
+			- Devuelve cuntos registros hay paa cada categoria 
+		+ select category,count(*) from posts group by 1;	
+			- msimo resultado, devuelve lo mismo que la sentencia anterior 
+		- En PostgreSQL, podemos escribir la condición GROUP BY usando el nombre de  los campos o su posición en la consulta.
+		+ select category,count(*) from posts group by category having count(*) > 2;
+			- Devuelve la cantidad de registros hay para cada categoría que tienen un conteo mayor a 2
+		+ select category,count(*) from posts group by 1 having count(*) > 2;
+			-Devuelve lo mismo que la sentenci anterior
+		- funciones de agregación con  alias
+			+ select category,count(*) as category_count from posts group by category;
+		- ¿qué hacemos si queremos usar un alias dentro de una consulta que también tiene una condición de tener ?
+			+ select category,count(*) as category_count from posts group by category; // mal
+			+ select category,count(*) as category_count from posts group by category having count(*) > 2; // correcta
 		-- UNION/UNION ALL
+			- se usa para combinar el conjunto de resultados de dos o más declaraciones SELECT, con las dos siguientes reglas
+				- Cada instrucción SELECT dentro de UNION debe tener el mismo número de columnas
+				- Las columnas deben tener tipos de datos similares.
+				- Las columnas de cada declaración SELECT deben estar en el mismo orden.
+			+ Se inserto un registro y se consulto dos tablas
+				+ select * from tags;
+				+ select * from categories;
+			- tener un conjunto de resultados que sea una unión de tags y categorías
+				+ select title from categories union select tag from tags order by title;
+					- combina los valores de las dos tablas y elimina los duplicados.
+				- Sin embargo si no queremos que se elimen duplcado, se debe usar el operador UNION ALL
+					+ select title from categories union all select tag from tags order by title;
+			- El operador UNION siempre implica DISTINCT antes de devolver los datos
+			- UNION ALL es una operación mucho más rápida que UNION-
+			- Se recomienda usar UNION en lugar de UNION ALL solo cuando no desea duplicados
 		-- EXCEPT/INTERSECT
+			- EXCEPT devuelve filas comparando los conjuntos de resultados de dos o más consultas
+			- Similar al operador UNION
+			- puede comparar consultas que tienen el mismo número y el mismo tipo de datos de campos
+				+ select * from tags;
+				+ select * from categories;
+				+ select title from categories except select tag from tags order by 1;
+					- 
+				+ select title from categories intersect select tag from tags order by 1;
+					- Devuelve todos los registros presentes en la primera tabla que también están presentes en la segunda tabla:
 --- UPSERT
+	-- UPSERT: al estilo de PostgreSQL
+		- En PostgreSQL, la instrucción upsert no existe como en otros DBMS
+		- ON CONFLICT : queremos insertar un nuevo registro encima del registro existente o actualizar un registro existente
+	-- cláusula RETURNING para INSERT
+	-- Devolver tuplas fuera de las consultas
+		-- ACTUALIZACIÓN relacionada con varias tablas
+		-- Explorando UPDATE .... RETURNING
+		-- ELIMINAR .... RETURNING
+--- Explorando CTE
+	-- concepto CTE
+	-- CTE en PostgreSQL 12
+	-- CTE – algunos ejemplos
+	-- Consulta recursiva
+		-- CTE recursivos
 
