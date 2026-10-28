@@ -3,10 +3,115 @@
 ****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
-----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
---- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+----------------------------------Sección 2: Interactuando con la Base de datos----------------------------------------------------
+---------------------Capítulo 6: Funciones de ventana
+		- Es para realizar cálculos en un conjunto de filas de la tabla que de alguna manera están relacionadas con la fila actual.
+---- Uso de las funciones básicas de la ventana de declaraciones
+		- las funciones de agregación se comportan de esta maner,a primero se ordenan y despues se agegan los datos, para despues ser agrupados
+				- Como ejemplo la siguiente sentencia, que devuelve las categorias con su total agrupandolas
+					+ select category,count(*) from posts group by category order by category;
+				- Mientras una funcion de ventana seria de la siguienta sentencia
+					+ select category, count(*) over (partition by category) from posts order by category;
+			- Las funciones de ventana crean agregados sin aplanar los datos en una sola fila.
+			- La clausa GROUP BY , se debe agregar a la ultima consulta para obtene el mismo resultado
+	--- Uso de la función PARTITION BY y cláusula WINDOW
+		- queremos contar las filas relativas de categoría,
+		- en otra columna el recuento total de las columnas
+			+ select category, count(*) over (partition by category),count(*) over () from posts order by category;
+		- de a consulta anterior queremos eliminar duplcados 
+			+ select distinct category, count(*) over (partition by category),count(*) over () from posts order by category;
+		- Usando las funciones de la ventana, es posible agregar los datos en diferentes campos en el misma sentencia
+		- Se puede definir un alias para el marco de la ventana como en la sentencia mostrada a continuacion
+			+ select distinct category, count(*) over w1 ,count(*) over W2 from post WINDOW w1 as (partition by category),W2 as () order by category; 
+		- cláusula WINDOW es muy útil cuando tenemos muchas funciones agregadas
+	--- Presentamos algunas funciones útiles
+			- Las funciones de ventana pueden usar todas las funciones de agregación
+			- función única: generar_series
+				+ select generate_series(1,5);
+		-- función ROW_NUMBER
+			- asigna un número progresivo para cada fila dentro de la partición
+				+ select category, count(*) over w, ROW_NUMBER () OVER (ORDER BY product_name from post WINDOW w as (partition by category) order by category;
+				- PARTITION BY para dividir la ventana subconjuntos basados en los valores de la columna de categoría
+		--  cláusula ORDER BY
+			- ORDER BY ordena los valores dentro de la ventana
+				- NULLS FIRST: tener los valores nulos al principio
+				- NULLS LAST: tener los valores nulos al final
+			- Ejemplo: genera una consulta con funcion de ventana sin la clausa ORDE BY
+				+ select category,row_number() over w,title from posts WINDOW w as (partition by category) order by category;
+			- En el mismo ejemplo utilizamos la clausa ORDER BY
+				+ select category,row_number() over w,title from posts WINDOW w as (partition by category order by title) order by category;
+					- dentro de la partición, los datos están ordenados en el campo title
+		-- FIRST_VALUE
+			- devuelve el primer valor dentro de la partición
+				+ select category,row_number() over w,title,first_value(title) over w from posts WINDOW w as (partition by category order by category) order by category;
+		-- LAST_VALUE
+			- devuelve el último valor dentro de la partición
+				+ select category,row_number() over w,title,last_value(title) over w from posts WINDOW w as (partition by category order by category) order by category;
+			- Es importante usar siempre la cláusula order by cuando usamos las funciones anterioes, co esto evtiamos resultados incoectos
+		-- RANGO(RANK)
+			- La función clasifica la fila actual dentro de su partición con espacios
+			- Si no especificamos la clausala PARTITION BY no sabe cómo correlacionar la tupla actual
+				+ select pk,title,author,category,rank() over () from posts order by category;
+			- Ahora añadimos la clausula ORDER BY 
+				+ select pk,title,author,category,rank() over (order by author) from posts ;
+			- Ahora bien añadimos PARTITION BY
+				+ select pk,title,author,category,rank() over (partition by author order by category) from posts order by author;
+		-- RANGO_DENSO (DENSE_RANK)
+			- similar a la función RANK. La diferencia radica en esta funcion clasifica la fila actual dentro de su particion sin espacios
+				+ select pk,title,author,category,dense_rank() over (order by author) from posts order by category;
+		-- funciones LAG y LEAD
+			- Pimero se debe configuar nuestro entorno y generar una secuencai de numeros
+				+ select x from (select generate_series(1,5) as x) V ;
+			- La función LAG devuelve un valor evaluado en la fila que está desplazada antes de la fila actual dentro de la partición
+				- Si se omite, el valor predeterminado de compensación es 1 y nulo 
+					+ select x,lag(x) over w from (select generate_series(1,5) as x) V WINDOW w as (order by x) ;
+				- Devuelve un conjunto de resultados con un valor de compensación igual a 1 
+				- parámetro de compensación , la función de retraso devolverá un conjunto de resultados
+				- una compensación igual al número que le hemos pasado como entrada
+					+ select x,lag(x,2) over w from (select generate_series(1,5) as x) V WINDOW w as (order by x) ;
+			- La función LEAD devuelve el valor evaluado en la fila que está desplazada después de la fila actual dentro de la partición
+				- usaremos la función sin ningún parámetro
+					+ select x,lead(x) over w from (select generate_series(1,5) as x) V WINDOW w as (order by x) ;
+				- con un parámetro de compensación
+					+ select x,lead(x,2) over w from (select generate_series(1,5) as x) V WINDOW w as (order by x) ;
+		-- función CUME_DIST
+			- calcula la distribución acumulada del valor dentro de una partición
+			- La función CUME_DIST calcula la fracción de filas de partición que son menores o iguales que la fila actual y sus pares
+				+ select x,cume_dist() over w from (select generate_series(1,5) as x) V WINDOW w as (order by x) ;
+			- nunca puede tener un valor mayor que el valor actual del campo
+		-- función NTILE
+			- La función NTILE de PostgreSQL agrupa las filas ordenadas en la partición
+			- a cada grupo se le asigna un número
+			- El parámetro de la funcion función NTILE determina de cuántos registros queremos
+				+ select x,ntile(2) over w from (select generate_series(1,6) as x) V WINDOW w as (order by x) ;
+			- conjunto de resultados en tres cubos
+				+ select x,ntile(3) over w from (select generate_series(1,6) as x) V WINDOW w as (order by x) ;
+			- acepta un número entero e intenta dividir la ventana en una serie de cubos especificando a qué cubo pertenece cada fila.
+---- Uso de funciones avanzadas de la ventana de estados de cuenta
+		- pueden ser útiles para llevar a cabo un análisis de datos más detallado
+			+ select distinct category, count(*) over w1 from post WINDOW w1 as (partition by category RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) order by category;
+		- RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+			- condiciones por defecto, conocidas como cláusula marco.
+			- los datos se dividen, primero por categoría
+			- dentro de la partición, el conteo se calcula restableciendo el conteo cada vez que se cambia el marco
+	--- cláusula frame
+		- nos permite administrar las particiones de una manera diferente
+		- Tiene dos formas:
+			- Rows between start_point y end_point
+				- cuando vamos a considerar un conjunto específico de registros relativos a la fila actual
+			- Range between start_point y end_point
+				- cuando vamos a considerar un rango de valores en una columna  específica en relación con el valor en la fila actual
+	--- ROWS BETWEEN start_point and end_point
+		- se utilizan para realizar análisis de datos en profundidad y minería de datos
+			+ select x from (select generate_series(1,5) as x) V WINDOW w as (order by x) ;
+		- queremos tener una suma incremental fila por fila
+			+ SELECT x, SUM(x) OVER w FROM (select generate_series(1,5) as x) V WINDOW w AS (ORDER BY x ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW);
+		- queremos encontrar la suma de la fila actual con la anterior
+			+ SELECT x, SUM(x) OVER w FROM (select generate_series(1,5) as x) V WINDOW w AS (ORDER BY x RANGE BETWEEN 1 PRECEDING AND CURRENT ROW);
+		- La sentencias anterior funcion de manera similar a una anterior, con la unca difeencia que el rngo de calculo esta en la primera fila y la fial actual de la particion
+		- utilizar para realizar una suma incremental
+			+ SELECT x, SUM(x) OVER w FROM (select generate_series(1,5) as x) V WINDOW w AS (ORDER by x ROWS UNBOUNDED PRECEDING);
+		- queremos hacer una suma inversa comenzando por el valor máximo de la tabla
+			+ SELECT x, SUM(x) OVER w FROM (select generate_series(1,5) as x) V WINDOW w AS (ORDER BY X ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING);
+		- UNBOUNDED FOLLOWING  funciona de manera opuesta  UNBOUNDED PRECEDING
+	--- RANGE BETWEEN start_point and end_point
