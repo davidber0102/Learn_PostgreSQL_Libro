@@ -181,19 +181,135 @@
 					- 
 				+ select title from categories intersect select tag from tags order by 1;
 					- Devuelve todos los registros presentes en la primera tabla que también están presentes en la segunda tabla:
---- UPSERT
+--- UPSERT 47
 	-- UPSERT: al estilo de PostgreSQL
 		- En PostgreSQL, la instrucción upsert no existe como en otros DBMS
 		- ON CONFLICT : queremos insertar un nuevo registro encima del registro existente o actualizar un registro existente
+			+ INSERT INTO table_name(column_list) VALUES(value_list) ON CONFLICT target action;
+				- ON CONFLICT significa que la acción de destino se ejecuta cuando el registro ya existe un registro con la misma clave principal
+					-DO NOTHING
+				+ DO UPDATE SET { column_name = { expression | DEFAULT } |
+					( column_name [, ...] ) = [ ROW ] ( { expression | DEFAULT } [, ...] )
+					| ( column_name [, ...] ) = ( sub-SELECT )
+					} [, ...] [ WHERE condition ]
+			- EJEMPLO	
+				- ver conenido de tabla 
+					+ \d j_posts_tags ;
+				- se agrega clave primaria 
+					+ ALTER TABLE j_post_tags ADD COLUMN post_pk integer;
+					+ alter table j_post_tags add constraint j_posts_tags_pkey primary key (pk,post_pk);
+					+ SELECT * FROM j_post_tags;
+				- insertar otro registro con la misma clave principal.inserción estándar
+					+ insert into j_posts_tags values(1,2);
+						- ERROR: duplicate key value violates unique constraint
+					+ opción EN CONFLICTO NO HACER NADA
+						+ insert into j_posts_tags values(1,2) ON CONFLICT DO NOTHING;
+							- INSERT 0 0, no devuelve un error, ni se inserto nada
+					- opción de configuración DO UPDATE
+						+ insert into j_post_tags values(1,2, 111) ON CONFLICT (pk,post_pk) DO UPDATE set pk=excluded.pk+1;
 	-- cláusula RETURNING para INSERT
-	-- Devolver tuplas fuera de las consultas
+		- brinda la oportunidad de devolver los valores de cualquier columna de una declaración de inserción o actualización después de ejecutar la inserción o actualización
+			- devolver todos los campos del registro que acabamos de insertar
+				+ insert into j_posts_tags values(1,2) returning *;
+					- El * significa que queremos devolver todos los campos del registro que acabamos de insertar;
+			- devolver solo algunos campos, tenemos que especificar qué campos debe devolver la consulta
+				+ insert into j_posts_tags values (1,6) returning tag_pk;
+	-- Devolver tuplas fuera de las consultas 
+			- ¿Qué pasa si queremos actualizar algunos registros en tablas que están relacionados de alguna manera?
 		-- ACTUALIZACIÓN relacionada con varias tablas
+			- consultamos la tabla para realizar el ejerciccio
+				+ select * from categories order by pk;
+			- tabla de publicaciones
+				+select pk,title,category from posts order by pk;
+			- modificar todos los registros de la tablas antes mencionadas que pertenecen a la categoría apple
+			- queremos agregar una cadena que contenga las palabras última actualización + fecha actual
+			- queremos agregar una cadena que contenga las palabras última actualización + fecha actual
+			- opción no estándar
+			- crear una tabla temporal para no modificar los datos
+				+ drop table if exists t_posts;
+				+ create temp table t_posts as select * from posts;
+				+ update t_posts p set title=p.title||' last updated '||current_date::text where p.category in (select pk from categories c where c.title='apple');
+			- forma de hacer la consulta de actualización es usando la condición de que existe
+				+ update t_posts p set title=p.title||' last updated'||current_date::text where exists (select 1 from categories c where c.pk=p.category and c.title='apple' limit 1);
+			- tercera forma de hacer este tipo de actualización
+				+ update t_posts p set title=p.title||' last updated '||current_date::text from categories c where c.pk=p.category and c.title='apple';
+					- PostgreSQL nos permite agregar una condición from a la declaración de actualización
 		-- Explorando UPDATE .... RETURNING
+				- actualización también tiene la posibilidad de agregar la palabra clave RETURNING
+					+ update t_posts p set title=p.title||' last updated'||current_date::text where exists (select 1 from categories c where c.pk=p.category and c.title='apple' limit 1) returning pk,title,category;
 		-- ELIMINAR .... RETURNING
+				-- RETURNING también está disponible para la declaración de eliminación
+					+ delete from t_posts p where exists (select 1 from categories c where c.pk=p.category and c.title='apple') returning pk,title,category;
 --- Explorando CTE
 	-- concepto CTE
+		- es un resultado temporal tomado de una instrucción SQL
+		- puede contener instrucciones SELECCIONAR, INSERTAR, ACTUALIZAR o ELIMINAR
+			+ WITH cte_name (column_list) AS (CTE_query_definition ) statement;
+		- quisiéramos crear un conjunto de datos temporal con todas las publicaciones escritas por el autor scotty
+			+ with posts_author_1 as(select p.* from posts p inner join users u on p.author=u.pk where username='scotty') select pk,title from posts_author_1;
+		- También podríamos escribir lo mismo usando una vista
+			+ select pk,title from(select p.* from posts p inner join users u on p.author=u.pk where u.username='scotty') posts_author_1;
+		- Ambas consultas dan el mismo resultado, la difeencia radica que el primero utiliza CTE, crea un conjunto de resulados temporales
 	-- CTE en PostgreSQL 12
-	-- CTE – algunos ejemplos
+			- A partir de la versión 12 de PostgreSQL, cuenta con dos nuevas opciones dentro de la ejecucion de CTE
+				- MATERIALIZED and NOT MATERIALIZED
+				- Para materializar el resultado temporal se debe agregar la plaabra materialized
+					+ with posts_author_1 as materialized (select p.* from posts p inner join users u on p.author=u.pk where username='scotty') select pk,title from posts_author_1;
+				- Para la opcion NOT MATERIALIZED, , no podra verse ninjunto esultado temporal
+					+ with posts_author_1 as not materialized (select p.* from post p inner join users u on p.author=u.pk_ where username='scotty') select pk,title from posts_author_1;
+			- el valor predeterminado es NO MATERIALIZADO
+			- A partir de la versión 12, tenemos que insertar la opción MATERIALIZADA si queremos  que nuestras consultas muestren el mismo comportamiento que teníamos con las versiones anteriores
+			-- CTE – algunos ejemplos
+				1. Ejercicio
+					+ drop table if exists t_posts;
+					+ create temp table t_posts as select * from posts;
+					+ create table delete_posts as select * from posts limit 0;
+					+ \d delete_posts
+					+ select pk,title,category from t_posts ;
+					+ select pk,title,category from delete_posts ;
+					- queremos eliminar algunos registros de la tabla de post
+					- queremos que todos los registros que hemos eliminado de la tabla t_posts
+					- se inserten en la tabla delete_posts
+						+ with del_posts as (delete from t_posts where category in (select pk from categories where title ='apple') returning *) insert into delete_posts select * from del_posts;
+							- La consulta aquí borra todos los registros de la tabla t_posts que tienen su categoría como 'apple' y
+							- en la misma transacción, inserta todos los registros borrados en la tabla delete_posts
+						+ select pk,title,category from t_posts ;
+						+ select pk,title,category from delete_posts ;
+				2.Ejercicio
+					+ drop table if exists t_posts;
+					+ create temp table t_posts as select * from posts;
+					+ reate table inserted_posts as select * from posts limit 0;
+					- queremos realizar una consulta SQL que mueva en la misma  transacción,
+					- todos los registros que están presentes en la tabla t_posts
+					- inserted_posts
+						+ with ins_posts as ( insert into inserted_posts select * from t_posts returning pk) delete from t_posts where pk in (select pk from ins_posts);
+						+ select pk,title,category from t_posts ;
+						+ select pk,title,category from inserted_posts ;
 	-- Consulta recursiva
+		- En PostgreSQL, es posible crear consultas recursivas.
+		- se utilizan en muchos casos de uso comunes, como consultar tablas que representan menús de sitios web
+		- Los CTE recursivos hacen posible tener consultas recursivas en PostgreSQL
 		-- CTE recursivos
+			- es una construcción especial que permite que una declaración auxiliar se haga referencia a sí misma
+			- Es util cuando necesitamos unir a una tabla un número desconocido de veces
+			- La solución tradicional implicaría algún tipo de iteración, probablemente por medio de un cursor que itera una tupla a la vez sobre todo el conjunto de resultados
+			- se basa en lo siguiente:
+				- Una declaración no recursiva, que funciona como una declaración de arranque
+					- y se ejecutacuando el término auxiliar se evalúa por primera vez
+				- Una declaración recursiva, que puede hacer referencia a la declaración de arranque
+			- Estas dos partes se unen mediante un predicado UNION
+				+ WITH RECURSIVE tags_tree AS (
+					 -- non recursive statment
+					SELECT tag, pk, 1 AS level
+					FROM tags WHERE parent IS NULL
+					UNION
+					-- recursive statement
+					SELECT tt.tag|| ' -> ' || ct.tag, ct.pk
+					, tt.level + 1
+					FROM tags ct
+					JOIN tags_tree tt ON tt.pk = ct.parent
+					)
+					SELECT level,tag FROM tags_tree
+					order by level;
+
 
