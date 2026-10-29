@@ -115,3 +115,26 @@
 			+ SELECT x, SUM(x) OVER w FROM (select generate_series(1,5) as x) V WINDOW w AS (ORDER BY X ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING);
 		- UNBOUNDED FOLLOWING  funciona de manera opuesta  UNBOUNDED PRECEDING
 	--- RANGE BETWEEN start_point and end_point
+		- consideraremos un RANGO de valores con respecto al valor en la fila actual
+		- diferencia cuando se trata de la cláusula ROWS es que si el campo que usamos para ORDER BY no contiene valores únicos para cada fila
+		- RANGE combinará todas las filas que encuentre con valores no únicos, en lugar de procesarlos uno solo
+		- ROWS incluirá todas las filas en el grupo no único
+			- 1. Creamos sentencia que contenga dtos simples con dulicaados
+				+ select generate_series(1,10) % 5 as x order by 1;
+			- 2. Sentencia con clausa ROWS
+				+ SELECT x, row_number() OVER w, SUM(x) OVER w FROM (select generate_series(1,10) % 5 as x) V WINDOW w AS (ORDER BY x ROWS BETWEEN 1 PRECEDING AND CURRENT ROW);
+					- Devuelve la suma de la fila anteror con la actual en la ultima columna
+			- 3. Sentencia con clausula RANGE
+				+ SELECT x, row_number() OVER w, SUM(x) OVER w FROM (select generate_series(1,10) % 5 as x) V WINDOW w AS (ORDER BY x RANGE BETWEEN 1 PRECEDING AND CURRENT ROW);
+					- En la sentenia anterior primero vemos cuatro frams y funciona postges de la siguiente manera	
+						- divide la función de ventana en marcos usando order by
+						- agrega los datos entre los marcos
+					- Se considero una partición ordenada de forma ascendente
+			- Sentenia 4 Considerar una partición ordenada de forma ascendente
+				- Clausa RANGE
+					+ SELECT x,row_number() OVER w, dense_rank() OVER w,sum(x) OVER w FROM (select generate_series(1,10) % 5 as x) V WINDOW w AS (ORDER BY x desc RANGE BETWEEN 1 PRECEDING AND CURRENT ROW);
+				- clausula ROWS
+					+ SELECT x,row_number() OVER w, dense_rank() OVER w,sum(x) OVER w FROM (select generate_series(1,10) % 5 as x) V WINDOW w AS (ORDER BY x desc ROWS BETWEEN 1 PRECEDING AND CURRENT ROW);
+			- la opción RANGE agrega datos por cuadro --- opera en grupos
+			- la opción FILAS agrega datos por filas --- opera en filas individuales
+					
