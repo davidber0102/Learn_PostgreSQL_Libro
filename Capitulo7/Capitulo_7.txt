@@ -3,10 +3,109 @@
 ****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
-----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
---- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+----------------------------------Sección 2: Interactuando con la Base de datos----------------------------------------------------
+---------------------Capítulo 7: Programación del lado del servidor
+			- puede ser útil, mueve la lógica de programación del lado del cliente al lado de la base de datos
+---- Explorando tipos de datos
+		- versatilidad de las funciones del lado del servidor
+			+ select * from categories where upper(title) like 'A%';
+				- función del lado del servidor
+				- convierte todos los caracteres de una cadena en mayúsculas
+	--- extensibilidad
+		- ampliar su funcionalidad y sus tipos de datos
+		- nos permite tener tipos de datos, funciones e índices funcionales que no están presentes en el sistema base
+	--- Tipos de datos estándar
+			- Se utlizan en comandos del lenguaje de definición de datos (DDL) .
+		-- booleanos 
+			- un tipo de datos booleano puede tomar los valores NULL, FALSE y TRUE
+				- estado VERDADERO (TRUE)
+					- true
+					- yes
+					- on
+					- 1
+				- estado FALSO (FALSE)
+					- false
+					- no
+					- off
+					- 0
+			+ select * from users;
+			- agreguemos un tipo de datos booleano a la tabla de
+				+ alter table users add user_on_line boolean;
+			- Actualizamos
+				+ update users set user_on_line = true where pk=1;
+			- queremos buscar todos los registros que tienen el campo user_on_line con VERDADERO
+				+ select * from users where user_on_line = true;
+			-  Buscamos gistros en el mismo campo ahora buscar NULL
+				+ select * from users where user_on_line is NULL;
+		-- Numeric
+				- PostgreSQL admite varios tipos de tipos de datos numéricos
+					- integer or int4 (4-byte integer number).
+					- bigint or int8 (8-byte integer number).
+					- real (4-byte variable-precision, inexact with 6 decimal digit precision).
+					- double precision (8-byte variable precision, inexact with 15 decimal digits precision).
+					- numeric (precision, scale), donde la precisión de un numérico es el conteo total de dígitos	
+			-- Integer
+				- Postges puede convertir un numero con varios decimales y hacer un trunc value de acuerdo al tipo de datos
+					+ select 1.123456789::integer as my_field;
+					+ select 1.123456789::int4 as my_field;
+					+ select 1.123456789::bigint as my_field;
+					+ select 1.123456789::int8 as my_field;
+			-- precisión fija
+				- conversión a real
+					+ select 1.123456789::real as my_field;
+				- conversión doble precisión
+					+ select 1.123456789::double precision as my_field;
+			-- precisión arbitraria
+				- conversión con precisión arbitraria
+					+ select 1.123456789::numeric(10,1) as my_field;
+						- 1.1
+					+ select 1.123456789::numeric(10,5) as my_field;
+						- 1.2346
+					+ select 1.123456789::numeric(10,9) as my_field;
+						- 1.123456789
+				- decidimos cuántos dígitos debe tener la escala
+					+ select 1.123456789::numeric(10,11) as my_field;
+						- ERROR:  desbordamiento de campo numeric
+						- tipo de datos se definió como un tipo numérico con un precisión igual a 10
+					+ select 1.123456789::numeric(10,10) as my_field;
+		-- Character
+				- character(n)/char(n): longitud fija, relleno en blan
+				- character varying(n)/varchar(n); longitud variable con un límite
+				- text: longitud ilimitada
+			-- longitud fija
+				- creamos una nueva tabla llamada new_tags, campo char(10) .
+					+ create table new_tags (pk integer not null primary key, tag char(10));
+					+ insert into new_tags values (1,'first tag');
+					+ insert into new_tags values (2,'tag');
+				- Dos nuevas funciones	
+					+ length (p):cuenta el número de caracteres, donde p es un parámetro de entrada y una cadena.
+					+ octet_length(p): cuenta el número de bytes, donde p es un parámetro de entrada y una cadena
+				+ select pk,tag,length(tag),octet_length(tag),char_length(tag) from new_tags;
+			-- longitud variable con un límite
+				- 
+			-- longitud variable sin límite
+		-- Date/timestamp
+			-- fecha 
+			-- marca de tiempo
+	--- NoSQL
+	--- hstore
+	--- JSON
+---- Exploración de funciones e idiomas
+	--- Funciones
+	--- SQL functions
+		-- básicas
+		-- devuelven un conjunto de elementos
+		-- devuelven una tabla
+		-- Polymorphic SQL functions
+	--- PL/pgSQL functions
+		-- Primera visión general
+		-- Declaración de parámetros de función
+			-- IN/OUT
+			-- Categorías de volatilidad
+		-- Control structure
+		-- Conditional statements
+			-- IF statements
+			-- CASE statements
+		-- Loop statements
+			-- record type
+		-- manejo de excepciones
