@@ -81,14 +81,99 @@
 					+ length (p):cuenta el número de caracteres, donde p es un parámetro de entrada y una cadena.
 					+ octet_length(p): cuenta el número de bytes, donde p es un parámetro de entrada y una cadena
 				+ select pk,tag,length(tag),octet_length(tag),char_length(tag) from new_tags;
+					- el espacio ocupado internamente por el campo tag es siempre 10; se definio longitud fija de 10
+					
 			-- longitud variable con un límite
-				- 
+				- Se repite el ejerccio anterior solo qu ahora se ocupaa varchar
+					+ drop table if exists new_tags;
+					+ create table new_tags ( pk integer not null primary key, tag varchar(10) );
+					+ insert into new_tags values (1,'first tag');
+					+ insert into new_tags values (2,'tag');
+					+ select pk,tag,length(tag),octet_length(tag) from new_tags;
+						- Se observs el tamaño interno real y la cantidad de caracteres en la cadena son iuales
+					- Como ejerccio insertareos un nuevo egistro peo que supere la cantidd pemitida
+						+ insert into new_tags values (3,'this sentence has more than 10 characters');
+							- Como resultado es el siguiente mensaje "ERROR:  el valor es demasiado largo para el tipo character varying(10"
+					- Postges de imnediato pir que la cadena que se deseaba insertar excede las dimensones declaraas.
 			-- longitud variable sin límite
+				- mismo ejemplo solo que usaremos "text"
+					+ drop table if exists new_tags;
+					+ create table new_tags ( pk integer not null primary key, tag text);
+					+ insert into new_tags values (1,'first tag'), (2,'tag'),(3,'this sentence has more than 10 characters');
+				- el tipo de datos de text, es de longitud ilimitada
+					+ select pk,substring(tag from 0 for 20),length(tag),octet_length(tag) from new_tags ;
+				- La única diferencia entre text y varchar(n), radica en que la primera es ilimitada
+				- función de subcadena toma una parte de la cadena a partir del parámetro from para n caracteres
 		-- Date/timestamp
+				- PostgreSQL  admite fechas y horas y la combinación de fecha y hora
+				- gestiona las horas tanto con configuración de zona horaria como sin configuración de zona horaria
+				- Las fechas se cuentan de acuerdo al calendario gregoriano.
 			-- fecha 
+				- Las fechas se representan de manera diferente dependiendo del país para el que tenemos que almacenar los datos
+					- forma americana es mes/día/año ---  month/day/year
+					- formato italiano es día/mes/año --- day/month/year
+					- Verificar como almacena internamente las fechas PostgreSQL
+						+ select * from pg_settings where name ='DateStyle';
+					- pg_settings: parámetros establecidos en el archivo de configuración postgresql.conf
+					- la configuración para mostrar la fecha es MDY (month/day/year).
+					- Para cambia este parametro consultado de manera global en el sistea, se edita el archivo  postgresql.conf
+						- despues de guardar la edicion, se necesita reiniciar o recargar el servicio
+							+ /etc/init.d/postgresql reload CONSOLA DEBIAN
+							+ Para Winows ir a Servicios, encontrar postges y einciar servicio correspondiente
+					- cómo insertar, actualizar y mostrar fechas
+						+ select '12-31-2020'::date;
+					- PostgreSQL proporciona algunas funciones para gestionar corectamente las fechas y son la siguientes
+						- 1. to_date(): convierte una cadena dada en una fecha
+							+ select to_date('31/12/2020','dd/mm/yyyy') ;
+								- Primer paramentro es el valor que se quiere convertir a fecha
+								- Segundo paramentro es el pattern
+								- Como resultado devuelve un valor de fecha
+							+ select pk,title,created_on from posts;
+								- ¿Cómo es posible que tengamos combinaciones de fecha/hora (timestamps) si nadie ha ingresado alguna vez estos valores en la tabla?
+									- el campo created_on tiene CURRENT_TIMESTAMP por defecto
+									- no se ha insertado ningún valor
+									- se insertará el servidor automaticamente al insertar registros
+							- FUNCION to_char
+								+ select pk,title,to_char(created_on,'dd-mm-yyyy') as created_on from posts;
+									- convierte una fecha en una cadena usando pattern  específico.
 			-- marca de tiempo
+				-  PostgreSQL puede administrar fechas y horas con una zona horaria y sin zona horaria
+				- Crearemos una nueva tabla
+					+ create table new_posts as select pk,title,created_on::timestamp with time zone as created_on_t, created_on::timestamp without time zone as create_on_nt from posts;
+				- Mostrar estructura:	
+					+ \d new_posts;
+						- create_on_t: timestemp with time zone
+						- created_on_nt:  timestamp without time zone)
+					+ select * from new_posts ;
+				- variable de entorno de PostgreSQL llamada variable de zona horaria 
+				- que dara como resulado viual el valor actual de la zona horaria
+					+ show timezone;
+				-si queremos modificar el valor anterior se debe ejecuatr la siguiente sentecnai
+					+ set timezone='GMT';
+						- Se vuelve a consultar 
+							+ show timezone;
+					- muestra la diferencia entre una marca de tiempo con una zona horaria y una marca de tiempo sin ona hoaria
 	--- NoSQL
+		- PostgreSQL maneja --- hstore, xml, json
 	--- hstore
+		- primer tipo de datos NoSQL que se implementó en PostgreSQL
+		- se utiliza para almacenar pares clave-valor en un solo valor
+		- Se debe tene habiliatada la extension hstoe
+			+ create extension hstore ;
+		- ejemplo: queremos mostrar todas las publicaciones con sus nombres de usuario y con sus categorías:
+			+ select p.pk,p.title,u.username,c.title as category from posts p inner join users u on p.author=u.pk left join categories c on p.category=c.pk order by 1;
+		- las publicaciones, los usuarios y las categorías de la tabla son tablas enormes
+		- almacenar toda la información sobre nombres de usuario y categorías en un solo campo
+			+ select p.pk,p.title,hstore(ARRAY['username',u.username,'category',c.title]) as options from post p inner join users u on p.author=u.pk_ left join categories c on p.category=c.pk order by 1;
+				- primero coloca en una matriz los valores de los campos de nombre de usuario y categoría
+				- luego los transforma en hstore
+		- queremos almacenar los datos en una nueva tabla
+			+ create table posts_options as select p.pk,p.title,hstore(ARRAY['username',u.username,'category',c.title]) as options from post p inner join users u on p.author=u.pk_ left join categories c on p.category=c.pk order by 1;
+		- buscar categoría = 'naranja'. 
+			+ select * from posts_options where options->'category' = 'orange';
+		- hstore, no es un tipo de datos estructurado, s puede inserte cualquier otro valor clave sin definirlo primero
+			+ insert into posts_options (pk,title,options) values (7,'my last post','"enabled"=>"false"') ;
+			+ select * from posts_options;
 	--- JSON
 ---- Exploración de funciones e idiomas
 	--- Funciones
