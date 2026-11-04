@@ -175,10 +175,66 @@
 			+ insert into posts_options (pk,title,options) values (7,'my last post','"enabled"=>"false"') ;
 			+ select * from posts_options;
 	--- JSON
+		- significa JavaScript Notación de objetos
+		- formato estándar abierto y está formado por pares clave-valor
+		- PostgreSQL admite el tipo de datos JSON de forma nativa
+		- queremos mostrar todas las publicaciones y etiquetas que tenemos en nuestra base de datos forumdb
+			- Forma de sntenca sql elacional
+				+ select p.pk,p.title,t.tag from posts p left join j_posts_tags jpt on p.pk=jpt.post_pk left join tags t on jpt.tag_pk=t.pk order by 1;
+			- forma relacional 
+				+ select p.pk,p.title,string_agg(t.tag,',') as tag from posts p left join j_posts_tags jpt on p.pk=jpt.post_pk left join tags t on jpt.tag_pk=t.pk group by 1,2 order by 1;
+			- 
+				+ select p.pk,p.title,string_agg(t.tag,',') as tag from posts p left join j_posts_tags jpt on p.pk=jpt.post_pk left join tags t on jpt.tag_pk=t.pk group by 1,2 order by 1;
+			- estructura JSON simple
+				+ select row_to_json(q) as json_data from ( select p.pk,p.title,string_agg(t.tag,',') as tag from posts p left join j_posts_tags jpt on p.pk=jpt.post_pk left join tags t on jpt.tag_pk=t.pk group by 1,2 order by 1) Q;
+			- nueva tabla llamada post_json
+				+ create table post_json (jsondata jsonb);
+			-	insertemos algunos datos en la tabla post_json
+				+ insert into post_json(jsondata) select row_to_json(q) as json_data from ( select p.pk,p.title,string_agg(t.tag,',') as tag from posts p left join j_posts_tags jpt on p.pk=jpt.post_pk left join tags t on jpt.tag_pk=t.pk group by 1,2 order by 1) Q;
+			- tabla post_json tiene los siguientes registros	
+				+ select jsonb_pretty(jsondata) from post_json;
+			- Para buscar los datos que tienen tag = "frutas", podríamos usar @> jsonb
+			- comprueba si el valor JSON izquierdo contiene el JSON derecho
+				+ select jsonb_pretty(jsondata) from post_json where jsondata @> '{"tag":"fruits"}';
+			- JSON se usa ampliamente cuando se trabaja con tablas grandes y cuando se necesita una estructura de datos que minimice la cantidad de uniones
 ---- Exploración de funciones e idiomas
+		- PostgreSQL es capaz de ejecutar código del lado del servidor
+		- el usuario puede crear funciones en diferentes lenguajes
+			- sql
+			- PL/pgSQL 
+			- C
 	--- Funciones
+		- La estructura de comandos DE UNA FUNCION es la siguiente:
+			/- CREATE FUNCTION function_name(p1 type, p2 type,p3 type, ....., pn type)
+				RETURNS type AS
+				BEGIN
+			 -- function logic
+				END;
+				LANGUAGE language_name
+			-/
+		- Los siguientes punto aplican para cualquier tipo de función que queramos crear
+			- Especifique el nombre de la función después de las palabras clave CREATE FUNCTION
+			- Haz una lista de parámetros separados por comas.
+			- Especifique el tipo de datos de devolución después de la palabra clave RETURNS
+			- Para el lenguaje PL/Pgsql, coloque código entre los bloques BEGIN y END .
+			- Para el lenguaje PL/Pgsql, la función debe terminar con la palabra clave END seguida de un punto y coma.
+			- Defina el idioma en el que se escribió la función, por ejemplo, sql o plpgsql, plperl, plpython, etc.
+			
 	--- SQL functions
+			- Las funciones SQL son la forma más fácil de escribir funciones en PostgreSQL y podemos usar cualquier comando SQL dentro de ellas.
 		-- básicas
+			- primeros pasos en el mundo de las funciones SQL
+				+ CREATE OR REPLACE FUNCTION my_sum(x integer, y integer) RETURNS
+					integer AS $$
+					SELECT x + y;
+					$ LANGUAGE SQL;
+				+ select my_sum(1,2);
+			- La función se puede llamar usando la declaración SELECT sin usar ninguna cláusula FROM
+				+ CREATE OR REPLACE FUNCTION my_sum(integer, integer) RETURNS 
+					integer AS $$
+					SELECT $1 + $2;
+					$$ LANGUAGE SQL;
+			- forma antigua de hacer referencia al parámetro dentro la función.
 		-- devuelven un conjunto de elementos
 		-- devuelven una tabla
 		-- Polymorphic SQL functions
