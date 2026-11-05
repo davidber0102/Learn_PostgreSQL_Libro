@@ -279,13 +279,167 @@
 		-- Primera visión general
 			- prototipo para escribir funciones
 				+ CREATE FUNCTION function_name(p1 type, p2 type,p3 type, ....., pn type) RETURNS type AS BEGIN -- function logic END; LANGUAGE language_name
-		-- Declaración de parámetros de función
+			- queremos recrear la función my_sum usando el lenguaje PL/pgsql:
+				+ CREATE OR REPLACE FUNCTION my_sum(x integer, y integer) RETURNS integer AS $BODY$ DECLARE ret integer; BEGIN ret := x + y; return ret; END; $BODY$ language 'plpgsql';
+				+ select my_sum(2,3);
+			- La consulta anterior proporciona los mismos resultados:
+				- 1.encabezado de la función: se define el nombre de la función los parámetros de entrada y el valor de retorno
+					+ CREATE OR REPLACE FUNCTION my_sum(x integer, y integer) RETURNS integer AS
+				- 2. comienzo del código caracteres $$, este presente al inicio y  final de la función
+					+ $BODY$
+				- 3. podemos definir nuestras variables; es importante que cada declaración o enunciado termine con un punto y coma:
+					+ DECLARE ret integer;
+				- 4. BEGIN: le decimos a PostgreSQL que queremos comenzar a escribir
+					+ BEGIN ret := x + y; return ret;
+						- Advertencia: no escriba un punto y coma después de BEGIN
+				- 5. Entre BEGIN y END, poner nuestro propio código
+					+ END;
+				- 6. La instrucción END indica que nuestro código ha terminado
+					+ $BODY$
+				- 7. declaración de idioma especifica
+					+ language 'plpgsql';
+		-- Declaración de parámetros en función
+				- veremos cómo definir, de dos maneras diferentes, la función my_sum
+				- primer ejemplo
+					+ CREATE OR REPLACE FUNCTION my_sum(integer, integer) RETURNS integer AS $BODY$ DECLARE x alias for $1; y alias for $2; ret integer;  BEGIN ret := x + y; return ret; END; $BODY$ language 'plpgsql';
+				- segundo ejemplo
+					+ CREATE OR REPLACE FUNCTION my_sum(integer, integer) RETURNS integer AS $BODY$ DECLARE ret integer; BEGIN ret := $1 + $2; return ret; END; $BODY$ language 'plpgsql';
+				- En el ejemplo 1, usamos alias
+					+ newname ALIAS FOR oldname;
 			-- IN/OUT
+				- En PL/pgSQL, podemos definir todos los parámetros como parámetros de entrada, parámetros de salida o parámetros de entrada/salida.
+				- Por ejemplo:
+					+ CREATE OR REPLACE FUNCTION my_sum_3_params(IN x integer,IN y integer, OUT zinteger) AS $BODY$ BEGIN z := x+y; END; $BODY$ language 'plpgsql';
+						- función my_sum_3_params acepta dos parámetros de entrada (x e y) y tiene una salida del parámetro z.
+				- podemos tener funciones que tengan múltiples variables como resultado
+				- ejemplo: queremos una función que, dados dos valores enteros, calcule su suma y su producto
+					+ CREATE OR REPLACE FUNCTION my_sum_mul(IN x integer,IN y integer,OUT w integer, OUT z integer) AS $BODY$ BEGIN z := x+y; w := x*y; END; $BODY$ language 'plpgsql';
+					+ select my_sum_mul(2,3);
+						- no es un valor escalar sino un registro, que es un tipo personalizado. Para hacer que la salida se separe en columnas
+							+ select * from my_sum_mul(2,3);
+				- Podemos definir los parámetros de la siguiente manera:
+					- IN: Parámetros de entrada (si se omite, esta es la opción predeterminada)
+					- OUT: Parámetros de salida
+					- INOUT: Parámetros de entrada/salida
 			-- Categorías de volatilidad
+				- En PostgreSQL, cada función se puede definir como VOLÁTIL, ESTABLE o INMUTABLE
+				- el valor por defecto es VOLÁTIL
+					- Una función VOLÁTIL puede hacer cualquier cosa, incluso modificar la base de datos. Puede devolver resultados diferentes en llamadas sucesivas con los mismos argumentos.
+					- Una función ESTABLE no puede modificar la base de datos y se garantiza que devolverá los mismos resultados dados los mismos argumentos para todas las filas dentro de una sola declaración.
+					- Una función INMUTABLE no puede modificar la base de datos y se garantiza que devolverá los mismos resultados con los mismos argumentos para siempre
+				-1. función estable;  la función now() es una función estable.
+				-La función now() devuelve la fecha y hora actual que tenemos al inicio de la transacción
+					+ begin ;
+					+ select now();
+					+ select now();
+					+ commit;
+					+ begin ;
+					+ select now();
+					+ commit;
+				- 2. función inmutable
+					+ begin;
+					+ select now();
+					+ select lower('MICKY MOUSE');
+					+ commit ;
 		-- Control structure
+				- PL/pgSQL tiene la capacidad de administrar estructuras de control
+					- Declaraciones condicionales
+					- Declaraciones de bucle
+					- Declaraciones del controlador de excepciones
 		-- Conditional statements
+				- lenguaje PL/pgSQL puede manejar sentencias condicionales de tipo IF y sentencias condicionales de tipo CASE.
 			-- IF statements
+				- la sintaxis de una instrucción IF
+					+ IF boolean-expression THEN
+						statements
+						[ ELSIF boolean-expression THEN
+						statements
+						[ ELSIF boolean-expression THEN
+						statements
+						...
+						]
+						]
+						[ ELSE
+						statements
+				-  escribir una función que, cuando se le den los dos valores entrada x e y, devuelva lo siguiente
+					- el primer parámetro es mayor que el segundo parámetro si x > y'
+					- 'el segundo parámetro es mayor que el primer parámetro si x < y'
+					- los 2 parámetros son iguales si x = y'
+						+ CREATE OR REPLACE FUNCTION my_check(x integer default 0, y integer default 0) RETURNS text AS $BODY$ BEGIN IF x > y THEN return 'first parameter is higher than second parameter'; ELSIF x < y THEN return 'second paramater is higher than first parameter'; ELSE return 'the 2 parameters are equals'; END IF; END; $BODY$ language 'plpgsql';
+					- existe su forma más corta
+						+ IF [...] THEN[...] ELSE[...] ENDIF;
+						+ IF [...] THEN[...] ENDIF;
+						+ select my_check(1,2);
+						+ select my_check(2,1);
+						+ select my_check(1,1);
 			-- CASE statements
+				- instrucción CASE simple
+				- sintaxis CASE simple , si tenemos que elegir de una lista de valores
+					+ CASE search-expression
+						WHEN expression [, expression [ ... ]] THEN
+						statements
+						[ WHEN expression [, expression [ ... ]] THEN
+						statements
+						... ]
+						[ ELSE
+						statements ]
+						END CASE;
+				- instrucción CASE buscada
+				- cuando tengamos que elegir entre un rango de valores
+					+ CASE
+						WHEN boolean-expression THEN
+						statements
+						[ WHEN boolean-expression THEN
+						statements
+						... ]
+						[ ELSE
+						statements ]
+						END CASE;
+				- primera sintaxis
+					+ CREATE OR REPLACE FUNCTION my_check_value(x integer default 0) RETURNS text AS $BODY$ BEGIN CASE x WHEN 1 THEN return 'value = 1'; WHEN 2 THEN return 'value = 2'; ELSE return 'value >= 3 '; END CASE; END; $BODY$ language 'plpgsql';
+					+ select my_check_value(1);
+					+ select my_check_value(2);
+					+ select my_check_value(3);
+				- ejemplo de la sintaxis CASE buscada
+					+ CREATE OR REPLACE FUNCTION my_check_case2(x integer default 0, y integer default 0) RETURNS text AS $BODY$ BEGIN CASE WHEN x > y THEN return 'first parameter is higher than second parameter'; WHEN x < y THEN return 'second paramater is higher than first parameter'; ELSE return 'the 2 parameters are equals'; END CASE; END; $BODY$ language 'plpgsql';
+					+ select my_check_case2(2,1);
+					+ select my_check_case2(1,2);
+					+ select my_check_case2(1,1);
+					+ select my_check_case2();
 		-- Loop statements
+				- PL/pgSQL puede manejar bucles de muchas formas
+				- PL/pgsql sea particularmente útil es el hecho de que nos permite procesar datos de consultas a través del lenguaje de procedimientos 
+				- Ejemplo: funcion PL/pgSQL que, cuando se le da un número entero como parámetro, devuelve un conjunto de resultados de un tipo de datos compuesto
+					+ create type my_ret_type as ( id integer, title text, record_data hstore );
+						- crea un nuevo tipo de datos,
+						- Se compone tipo de datos entero + un tipo de datos de texto + un tipo de datos hstore
+						- función que devuelva un conjunto de resultados del tipo de datos my_ret_type
+							+ CREATE OR REPLACE FUNCTION my_first_fun (p_id integer) returns setof my_ret_type as $$ DECLARE rw post%ROWTYPE; -- declare a rowtype; ret my_ret_type; BEGIN for rw in select * from post where pk=p_id loop ret.id := rw.pk; ret.title := rw.title; ret.record_data := hstore(ARRAY['title',rw.title,'Title and Content',format('%s %s',rw.title,rw.content)]); return next ret; end loop; return; END; $$ language 'plpgsql';
+								- muchas cosas se concentran en estas pocas líneas de código PL/pgSQL
+									- rw posts%ROWTYPE: la variable rw se define como un contenedor de una sola fila de la tabla
+									- for rw in select * from posts where pk=p_id loop: hacemos un ciclo dentro del resultado de la selección, asignando el valor devuelto por el comando select cada vez a la variable rw.
+									- return next ret;: devuelve el valor de la variable ret y va al siguiente registro del ciclo for .
+									- end loop;: dice a PostgreSQL que el ciclo for termina aquí
+									- return;: instrucción de retorno de la función
+						- las funciones se ejecutan atómicamente que la función devuelve los resultados no en la ejecución del comando RETURN NEXT sino en la ejecución del comando RETURN colocado al final de la función
 			-- record type
+				- %ROWTYPE en PL/pgSQL 
+				- Hay un tipo de datos llamado record que generaliza el concepto
+				- Por ejemplo, podemos reescribir my_first_fun
+					+ CREATE OR REPLACE FUNCTION my_second_fun (p_id integer) returns setof my_ret_type as $$ DECLARE rw record; -- declare a record variable ret my_ret_type; BEGIN for rw in select * from posts where pk=p_id loop ret.id := rw.pk; ret.title := rw.title; ret.record_data := hstore(ARRAY['title',rw.title ,'Title and Content',format('%s %s',rw.title,rw.content)]); return next ret; end loop; return; END; $$ language 'plpgsql';
+						- la variable rw se define como un tipo de datos de registro
+						- rw es un objeto que se puede asociar con cualquier registro de cualquier tabla
+					+ select * from my_first_fun(3);
+					+ select * from my_second_fun(3);
 		-- manejo de excepciones
+			- también puede manejar excepciones.
+			- El bloque BEGIN...END de una función permite la opción  EXCEPTION , que funciona como captura de excepciones. Por ejemplo, si escribimos una función para
+			- Si escribiemos una funcion dividir dos números, podríamos tener un problema con una división por 0:
+				+ CREATE OR REPLACE FUNCTION my_first_except (x real, y real ) returns real as $$ DECLARE ret real; BEGIN ret := x / y; return ret; END; $$ language 'plpgsql';
+			- funciona bien si y <> 0
+				+ select my_first_except(4,2);
+			- un valor cero, tenemos un problema
+				+ select my_first_except(4,0);
+			- Para resolver este problema, tenemos que manejar la excep
+				+ CREATE OR REPLACE FUNCTION my_second_except (x real, y real ) returns real as $$ DECLARE ret real; BEGIN ret := x / y; return ret; EXCEPTION WHEN division_by_zero THEN RAISE INFO 'DIVISION BY ZERO'; RAISE INFO 'Error % %', SQLSTATE, SQLERRM; RETURN 0;  END; $$ language 'plpgsql' ;
+				+ select my_second_except(4,0);
