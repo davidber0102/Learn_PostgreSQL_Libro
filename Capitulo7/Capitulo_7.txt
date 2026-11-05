@@ -236,10 +236,49 @@
 					$$ LANGUAGE SQL;
 			- forma antigua de hacer referencia al parámetro dentro la función.
 		-- devuelven un conjunto de elementos
+			- cómo crear una función SQL que devuelva un conjunto de resultados de un tipo de datos
+			- Crear funcion que tome p_title como parámetro y elimine todos los registros que tengan title=p_title
+				- devolver todas las claves de los registros eliminados
+					+ CREATE OR REPLACE FUNCTION delete_posts(p_title text) returns setof integer as $$ delete from posts where title=p_title returning pk; $$ LANGUAGE SQL;
+			- situación antes de llamar a la función delete_posts :
+				+ select pk,title from posts order by pk;
+			- situación después de que llamamos a la función delete_posts
+				+ select delete_posts('my tomato');
+			- tipo de datos setof
+				- define un conjunto de resultados de un tipo de datos
+				- la función delete_posts definida para devolver un conjunto de enteros por lo que su resultado será un conjunto de datos de enteros
 		-- devuelven una tabla
+			- es posible que haya casos en los que necesitemos que nuestra función devuelva un conjunto de resultados de varios campos
+			- Tomemos el mismo ejrccio nterior de eliminar po titulo
+				+ create or replace function delete_posts (p_title text) returns table (ret_key integer,ret_title text) AS $$ delete from posts where title=p_title returning pk,title; $$ language SQL;
+			- La única diferencia es que ahora la función devuelve un tipo de tabla
+				+ select pk,title from posts order by pk;
+				+ select * from delete_posts('my tomato');
+			- Las funciones que devuelven una tabla pueden tratarse como tablas reales, en el sentido de que podemos usarlas con las opciones ofin, exist, join , etc.
 		-- Polymorphic SQL functions
-	--- PL/pgSQL functions
+			- Las funciones polimórficas son útiles para los DBA cuando necesitamos escribir una función que tiene que trabajar con diferentes tipos de datos
+			- Ejemplo: 
+				- queremos recrear algo que se parezca a la función NVL de Oracle
+				- crear una función que acepte dos parámetros y reemplace el primer parámetro con el segundo si el primer parámetro es nulo
+					+ create or replace function nvl ( anyelement,anyelement) returns anyelement as $$ select coalesce($1,$2); $$ language SQL;
+					- La invocamos o llamamos
+						+ select nvl(NULL::int,1);
+						+ select nvl(''::text,'n'::text);
+						+ select nvl('a'::text,'n'::text);
+	--- PL/pgSQL functions 
+			- es el lenguaje de procedimiento incorporado predeterminado para PostgreSQL
+			- PL/pgSQL fueron crear un lenguaje de procedimiento cargable que pueda
+				- Se puede usar para crear funciones y activar procedimientos
+				- Añadir nuevas estructuras de control.
+				- Agregue nuevos tipos de datos al lenguaje SQL
+			- admite lo siguiente:
+				- Declaraciones de variables
+				- Expresiones
+				- Estructuras de control como estructuras condicionales o estructuras de bucle
+				- Cursores
 		-- Primera visión general
+			- prototipo para escribir funciones
+				+ CREATE FUNCTION function_name(p1 type, p2 type,p3 type, ....., pn type) RETURNS type AS BEGIN -- function logic END; LANGUAGE language_name
 		-- Declaración de parámetros de función
 			-- IN/OUT
 			-- Categorías de volatilidad
