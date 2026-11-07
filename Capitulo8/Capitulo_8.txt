@@ -3,10 +3,75 @@
 ****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
-----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
---- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+----------------------------------Sección 2: Interactuando con la Base de datos----------------------------------------------------
+---------------------Capítulo 8: Triggers and Rules
+		- En PostgreSQL, los eventos posibles vienen dados por las instrucciones SELECT/INSERT/UPDATE y DELETE
+		- En PostgreSQL, hay dos formas de manejar eventos:
+			- Rules: las reglas suelen ser controladores de eventos simples
+			- Triggers: son controladores de eventos más complejos
+		- cuándo es más apropiado usar una de ellas en lugar de la otra
+		- Los disparadores y las reglas se utilizan a menudo para actualizar acumuladores y para modificar o eliminar registros pertenecen a tablas diferentes de aquella en la que estamos modificando registros
+		- herramientas muy potentes permiten realizar operaciones en tablas distintas a aquella en la que estamos modificando los datos
+---- Explorando reglas en PostgreSQL
+		- las reglas son controladores de eventos simples gestionar todos los eventos que realizan operaciones: INSERT, DELETE UPDATE
+		- El concepto fundamental detrás de las reglas es modificar el flujo de un evento
+		- Con un evento SE PUEDE REALIZAR con las siguientes condiciones
+			- No hacer nada y luego deshacer la acción de ese evento.
+			- Activar otro evento en lugar del predeterminado
+			- Activa otro evento junto con el predeterminado
+		- dada una operación (INSERT) podemos realizar una de estas tres acciones
+			- Cancelar la operación
+			- Realice otra operación en lugar de INSERTAR.
+			- Ejecute INSERT y simultáneamente realice otra operación.
+	--- Comprender las variables ANTIGUAS(OLD) y NUEVAS(NEW)
+		- representan el estado de la fila en la tabla antes o después del evento
+		- son cursores que representan todo el registro
+		- Ejemplo: tomemos en cuenta la tabla tgs y cosulemos sus registros
+			+ select * from tags;
+		- queremos modificar la tag con pk=3 de 'manzana' a 'naranja'
+			+ update tags set tag='orange' where pk=3;
+			- La variable OLD: 3, 'apple', 1
+			- La variable NUEVA: 3, 'orange', 1
+		- Es bastante lógico que para ciertas operaciones ambas variables puedan exisitir
+		- hay otas opeaciones que solo una de esta variablesexiste
+			Operation/Variable 		NEW 			OLD
+				INSERT 				presente 		ausente
+				DELETE 				ausente			presente
+				UPDATE				presente		presente
+	--- Reglas sobre INSERTAR
+			- SINTAXIS
+				+ CREATE [ OR REPLACE ] RULE name AS ON event
+					TO table [ WHERE condition ]
+					DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }
+			- tres opciones que podemos tener
+				- The ALSO option (TAMBIÉN)
+				- The INSTEAD option (EN LUGAR)
+				- The INSTEAD NOTHING option (EN LUGAR DE NADA)
+		-- The ALSO option (TAMBIÉN)
+			- de la tabla tags queremos copiar todos los registros con el valor de la etiqueta de campo comenzando con la letra a en la tabla a_tag
+				- 1. creemos una nueva tabla llamada a_tags:
+					+ create table a_tags ( pk integer not null primary key, tag text, parent integer);
+				- 2. crear la nueva regla
+					+ create or replace rule r_tags1 as on INSERT to tags where NEW.tag ilike 'a%' DO ALSO insert into a_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+						- cada vez que se inserta un registro con un valor de etiqueta que comienza con la letra "a",
+						- además de insertarse en la tabla de tags
+						- también debe insertarse en a_tags
+				-3. + insert into tags (tag) values ('apple');
+				- 4. verificamos los registros en la tabla
+					+ select * from tags;
+					+ select * from a_tags;
+		-- The INSTEAD OF option
+	--- Reglas sobre ELIMINAR / ACTUALIZAR
+		-- Creando la tabla new_tags
+		-- Creando dos tablas
+	--- Administrar reglas sobre eventos INSERTAR, ELIMINAR y ACTUALIZAR
+		-- INSERTAR reglas
+		-- DELETE rules
+		-- UPDATE rules
+---- Administrar triggers en PostgreSQL
+	--- Trigger syntax
+	--- Triggers on INSERT
+		-- The TG_OP variable
+	--- Triggers on UPDATE / DELETE
+---- eventos DE triggers
+	--- Un ejemplo de un disparador de eventos
