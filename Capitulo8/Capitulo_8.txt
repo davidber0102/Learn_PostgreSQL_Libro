@@ -56,18 +56,114 @@
 						- cada vez que se inserta un registro con un valor de etiqueta que comienza con la letra "a",
 						- además de insertarse en la tabla de tags
 						- también debe insertarse en a_tags
-				-3. + insert into tags (tag) values ('apple');
+				- 3. + insert into tags (tag) values ('apple');
 				- 4. verificamos los registros en la tabla
 					+ select * from tags;
 					+ select * from a_tags;
+						- El registro está presente en ambas tablas
+						- las reglas recién creada se ejecuta en PostgreSQL siempre se ejecutan antes del evento
 		-- The INSTEAD OF option
+			- queremos mover todos los registros DE LA COLUMNA tag que comienza con la letra b EN LA TABLA b_tags
+				- 1. nueva tabla llamada b_tags
+					+ create table b_tags ( pk integer not null primary key , tag text, parent integer);
+				- 2. crear la nueva regla
+					+ create or replace rule r_tags2 as on INSERT to tags where NEW.tag ilike 'b%' DO INSTEAD insert into b_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+						- que cada vez que se inserta un registro con un valor de tag que comienza con la letra "b", debe moverse a la tabla b_tags
+				- 3. consulta para insetar en tabla tag	
+					+ insert into tags (tag) values ('banana');
+						- podemos suponer que no se ha insertado nada en la tabla
+				- 4. consulta tabla 
+					+ select * from tags;
+				- 5. el valor banana no aparece en la tabla tsg(YABLA PADRE), AHORA CONSULTAMOS LA TABLA B_TAGS
+					+ select * from b_tags ;
+						- La regla asegur que el registro por empezar on la letra "b" no se insetara en la tabla tg, si no el la tabla b_tags
+				- 6. regla INSERTAR
+					- supongamos que no queremos que se inserte nada cada vez que se inserta un registro con el campo de tag que comienza con la letra "c".
+						+ create or replace rule r_tags3 as on INSERT to tags where NEW.tag ilike 'c%' DO INSTEAD NOTHING;
+				- 7. la instruccion para postgresql fue que cada vez que la tabla de tgs reciba un registro que comience con la letre "c", en el campo tgs, este no debe ser considerado}
+					+ insert into tags (tag) values ('cedro');
+				- 8. registro no se ha insertado en ninguna tabla
+					+ select pk,tag,parent,'tags' as tablename from tags union all select pk,tag,parent,'a_tags' as tablename from a_tags union all select pk,tag,parent,'b_tags' as tablename from b_tags order by tablename, tag;
 	--- Reglas sobre ELIMINAR / ACTUALIZAR
+			-  Para entender y cumplir el bejtivo de esta seccion vamos a relizar varias sentencias
 		-- Creando la tabla new_tags
+			- nos ayudará a tener un ambiente limpio donde podamos hacer nuestras pruebas
+				+ create table new_tags as select * from tags limit 0;
+					- copia la estructura de los campos de la tabla de tags pero no copia las restricciones ni ningún índice
+			- Creamos restricciones e indices
+				+ alter table new_tags alter pk set not null ;
+				+ alter table new_tags add constraint new_tags_pk primary key (pk);
 		-- Creando dos tablas
+			- creemos las tablas new_a_tags (egistros que comienzan con la letra a) y new_b_tags: (registros que comienzan con la letra b)
+			- Tabla new_a_tags
+				+ create table new_a_tags as select * from a_tags limit 0;
+				+ alter table new_a_tags alter pk set not null ;
+				+ alter table new_a_tags add constraint new_b_tags_pk primary key (pk);
+				+ \d new_a_tags
+			- new_b_tags
+				+ create table new_b_tags as select * from a_tags limit 0;
+				+ alter table new_b_tags alter pk set not null ;
+				+ alter table new_b_tags add constraint new_a_tags_pk primary key(pk);
+				\d new_b_tags
+				
 	--- Administrar reglas sobre eventos INSERTAR, ELIMINAR y ACTUALIZAR
+			- todas las etiquetas que comienzan con la letra "a" se almacenen en la tabla new_tags y también se copien en la tabla new_a_tags
+			- lo mismo para las etiquetas que comienzan con la "b"
+			- administrar las reglas para los eventos INSERTAR, ELIMINAR y ACTUALIZAR de las siguientes maneras:
+				- Las reglas INSERT deben reconocer todas las etiquetas que comienzan con las letras "a" o "b" y copiar  esos registros en sus respectivas tablas: new_a_tags y new_b_tags.
+				- Las reglas DELETE deben reconocer todas las etiquetas que comienzan con las letras "a" o "b" y eliminar esos registros en las tablas respectivas: new_a_tags y new_b_tags.
+				- Las reglas de actualización deben reconocer todas las etiquetas que comienzan con las letras "a" o "b" y, un registro cambia su etiqueta, la regla debe verificar si el registro debe copiarse o eliminarse en las tablas new_a_tags y new_b_tags .
 		-- INSERTAR reglas
+			+ create or replace rule r_new_tags_insert_a as on INSERT to new_tags where NEW.tag ilike 'a%' DO ALSO insert into new_a_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+			+ create or replace rule r_new_tags_insert_b as on INSERT to new_tags where NEW.tag ilike 'b%' DO ALSO insert into new_b_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+				- tabla new_tags ahora tiene dos nuevas reglas
+					+ \d new_tags;
+				- insertemos algunos datos
+					+ insert into new_tags values(1,'fruits',NULL);
+					+ insert into new_tags values(2,'apple',1);
+					+ insert into new_tags values(3,'orange',1);
+					+ nsert into new_tags values(4,'banana',1);
+				- revisemos la tabla principal
+					+ select * from new_tags ;
+				- tabla secundaria table_a
+					+ select * from new_a_tags ;
+				- tabla secundaria table_b
+					+ select * from new_b_tags ;					
 		-- DELETE rules
+			- Necesitamos reglas que, si se elimina un registro de la tabla new_tags y comienza con la letra "a" o con la letra "b",
+			- Las tablas new_a_tags y new_b_tags también deben eliminarse
+			- Registros que comiencen con la letra a:
+				+ create or replace rule r_new_tags_delete_a as on delete to new_tags where OLD.tag ilike 'a%' DO ALSO delete from new_a_tags where pk=OLD.pk;
+			- Registros que comiencen con la letra b:
+				+ create or replace rule r_new_tags_delete_b as on delete to new_tags where OLD.tag ilike 'b%' DO ALSO delete from new_b_tags where pk=OLD.pk;
+			- situación actual de la tabla new_tags
+				+ \d new_tags
+			- Probemos si las dos nuevas reglas funcionan
+				+ delete from new_tags where tag = 'apple';
+				+ delete from new_tags where tag = 'banana';
+				+ select * from new_tags ;
+				+ select * from new_a_tags ;
+				+ select * from new_b_tags ;				
 		-- UPDATE rules
+			- regla que verifique si una etiqueta se actualiza con una palabra que comienza con "a" o "b"
+			- crear primero una función que realice esta verificación
+			- crear una regla basada en esa función
+				+ create or replace function move_record (p_pk integer, p_tag text, p_parent integer,p_old_pk integer,p_old_tag text ) returns void language plpgsql as $$ BEGIN if left(lower(p_tag),1) in ('a','b') THEN delete from new_tags where pk = p_old_pk; insert into new_tags values(p_pk,p_tag,p_parent); end if; END;
+					- Esta función toma cinco parámetros como entrada; los tres primeros parámetros son los valores nuevos que llegan de la actualización
+					- los dos últimos parámetros son los valores antiguos del registro que están presentes en el registro.
+					- comprueba
+						- Si el registro en la tabla comienza con la letra "a" o "b".
+						- el registro anterior en la tabla comienza con la letra "a" o "b", elimina el registro anterior e inserta el nuevo
+					- La regla es la siguientes	
+						+ create or replace rule r_new_tags_update_a as on UPDATE to new_tags DO ALSO select move_record(NEW.pk,NEW.tag,NEW.parent,OLD.pk,OLD.tag);
+					
+						+ update new_tags set tag='apple' where tag='orange';
+						+ select * from new_a_tags ;
+						+ select * from new_tags ;
+						+ update new_tags set tag='banana' where tag='apple';
+						+ select * from new_tags ;
+						+ select * from new_a_tags ;
+						+ select * from new_b_tags ;
 ---- Administrar triggers en PostgreSQL
 	--- Trigger syntax
 	--- Triggers on INSERT
