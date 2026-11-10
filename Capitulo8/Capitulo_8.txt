@@ -165,7 +165,60 @@
 						+ select * from new_a_tags ;
 						+ select * from new_b_tags ;
 ---- Administrar triggers en PostgreSQL
+		- definimos las reglas como controladores de eventos simples
+		- podemos definir disparadores como controladores de eventos complejos hay registros NUEVOS y ANTIGUOS
+		- diferencia entre las reglas y los disparadores es que con los disparadores es posible manejar eventos 
+			- INSERTAR, ACTUALIZAR / ELIMINAR / y TRUNCAR
+		- antes de que sucedan o después de que sucedan
+		- gestionar los siguientes eventos:
+			- BEFORE (Antes de ) INSERT/UPDATE/DELETE/TRUNCATE
+			- AFTER (Despues de) INSERT/UPDATE/DELETE/TRUNCATE
+			- INSTEAD OF (En lugar de) INSERT/UPDATE/DELETE
+		- Para las reglas 
+			- Para INSERTAR solo hay registro NUEVO 
+			- Para INSERCCION el registro NUEVO y ANTIGUO
+			- Para ELIMINACIÓN el registro ANTIGUO
+		- Si los disparadores y las reglas están presentes simultáneamente en el mismo evento en una tabla,
+			- reglas siempre se activan antes que los disparadores
+		- Si hay varios activadores en el mismo evento de una tabla
+		- primeros pasos para usar disparadores, ejecutan en orden alfabético
 	--- Trigger syntax
+		+++ CREATE [ CONSTRAINT ] TRIGGER name { BEFORE | AFTER | INSTEAD OF } { event
+			[ OR ... ] }
+			ON table_name
+			[ FROM referenced_table_name ]
+			[ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY
+			DEFERRED ] ]
+			[ REFERENCING { { OLD | NEW } TABLE [ AS ] transition_relation_name } [
+			... ] ]
+			[ FOR [ EACH ] { ROW | STATEMENT } ]
+			[ WHEN ( condition ) ]
+			EXECUTE { FUNCTION | PROCEDURE } function_name ( arguments )
+			
+			where event can be one of:
+				INSERT
+				UPDATE [ OF column_name [, ... ] ]
+				DELETE
+				TRUNCATE
+		- puntos clave en ejecución de un disparador
+			- 1. El evento que queremos manejar, por ejemplo, INSERTAR, ELIMINAR o ACTUALIZAR
+			- 2. Cuando queremos que comience la ejecución de TRIGGER (por ejemplo, ANTES DE INSERTAR).
+			- 3. El activador llama a una función para realizar alguna acción.
+		- La sintaxis de la funcion invocada por el dspaador es la siguiente:
+			++ CREATE OR REPLACE FUNCTION function_name RETURNS trigger as
+					$$
+					DECLARE
+					....
+					BEGIN
+					RETURN
+					END;
+					$$
+					LANGUAGE 'plpgsql';
+			- Las funciones a las que llaman los disparadores son funciones que no tienen parámetros de entrada y deben  devolver un tipo TRIGGER
+			- toman los parámetros de los registros NUEVOS / ANTIGUOS
+			- Ejemplo de la definicion de una posible funcion de TRIGGER en el evento ANTES DE INSERTAR
+				+ CREATE TRIGGER trigger_name BEFORE INSERT on table_name FOR EACH ROW
+				+ EXECUTE PROCEDURE function_name.
 	--- Triggers on INSERT
 		-- The TG_OP variable
 	--- Triggers on UPDATE / DELETE
