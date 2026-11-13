@@ -220,6 +220,42 @@
 				+ CREATE TRIGGER trigger_name BEFORE INSERT on table_name FOR EACH ROW
 				+ EXECUTE PROCEDURE function_name.
 	--- Triggers on INSERT
+		- primeros disparadores
+			- 1. regla escrita en la seccion The ALSO option
+				+ create or replace rule r_tags1 as on INSERT to tags where NEW.tag ilike 'a%' DO ALSO insert into a_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+			- 2. situación, eliminaremos lo que tenemos
+				+ drop table if exists new_tags cascade;
+				+ create table new_tags as select * from tags limit 0;
+				+ truncate table a_tags;
+				+ select * from new_tags ;
+				+ select * from a_tags ;
+			- 3. crear función, que luego será llamada por el tigger(disparador)
+				+ CREATE OR REPLACE FUNCTION f_tags() RETURNS trigger as $$ BEGIN IF lower(substring(NEW.tag from 1 for 1)) = 'a' THEN insert into a_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent); END IF; RETURN NEW; END; $$ LANGUAGE 'plpgsql';
+					- Desifremos el conenido de la sentencia sql anterior	
+						- lower (substring (NEW.tag from 1 for 1)): aqui se toma el primer caracter de una cadena y lo convierte a minusculas
+						- RETURN NEW: pasa el nuevo registro de la tabla a INSERT en la tabla new_tags
+			- 4. Se definira el tigger con las palabras clave BEFORE INSERT en la tabla t_tags
+				+ CREATE TRIGGER t_tags BEFORE INSERT on new_tags FOR EACH ROW EXECUTE PROCEDURE f_tags();
+			- 5. cuando se inserta un valor en la tabla new_tags
+				- antes de ejecutar el INSERT,el disparador se ejecuta y devuelve el NUEVO registro a la acción predeterminada
+				- Comprobemos:
+					+ insert into new_tags (pk,tag,parent) values (1,'fruits',NULL);
+					+ insert into new_tags (pk,tag,parent) values (2,'apple',1);
+					+ select * from new_tags ;
+					+ select * from a_tags ;
+			- 6. comprenderemos mejor la diferencia entre trabajar con reglas y trabajar con disparadores
+			 - lo que e petende es lograr con os tiggers es recibir el mismo resultado que podemos lograr con la siguiente egla:
+				+ create or replace rule r_tags2 as on INSERT to tags where NEW.tag ilike 'b%' DO INSTEAD insert into b_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+			- 7. usemos el mismo procedimiento que usamos en las reglas
+				- nueva función que luego se activará desde el disparador
+					+ CREATE OR REPLACE FUNCTION f2_tags() RETURNS trigger as $$ BEGIN IF lower(substring(NEW.tag from 1 for 1)) = 'b' THEN insert into b_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent); RETURN NULL; END IF; RETURN NEW; END; $$ LANGUAGE 'plpgsql';
+					+ CREATE TRIGGER t2_tags BEFORE INSERT on new_tags FOR EACH ROW EXECUTE PROCEDURE f2_tags();
+			- 8. L a instruccion substring prácticamente idéntico a lo que vimos por primera vez en relación con las reglas
+				- la diferencia es que RETURN NULL
+				-si el valor NEW.tag comienza con 'b', devuelve un valor NULL a la acción predeterminada
+				- DESPUES INSERT en la tabla new_tags no insertará ningún valor.
+				- Si la condicion if NO SE CUMPLE, LA FUNCION DEVULEVE NUEVO Y EL REGISTRO SE INSERTA EN LA TABLA NEW_TAGS
+					+ 
 		-- The TG_OP variable
 	--- Triggers on UPDATE / DELETE
 ---- eventos DE triggers
