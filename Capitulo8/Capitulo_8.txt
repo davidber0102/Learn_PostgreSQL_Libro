@@ -255,8 +255,231 @@
 				-si el valor NEW.tag comienza con 'b', devuelve un valor NULL a la acción predeterminada
 				- DESPUES INSERT en la tabla new_tags no insertará ningún valor.
 				- Si la condicion if NO SE CUMPLE, LA FUNCION DEVULEVE NUEVO Y EL REGISTRO SE INSERTA EN LA TABLA NEW_TAGS
-					+ 
+					+ insert into new_tags (pk,tag,parent) values (1,'fruits',NULL);
+					+ insert into new_tags (pk,tag,parent) values (2,'apple',1);
+					+ insert into new_tags (pk,tag,parent) values (3,'banana',1);
+					+ select * from new_tags ;
+					+ select * from a_tags ;
+					+ select * from b_tags ;
+			- 9. Ahora se escribiria un dispaadaro nadamas, ,
+				- Se vuelve a las condiciones iniciales borando lo que se tiene
+				- Se borran datos de la tablas y tablas, disparadores y funciones
+					+ TRUNCATE new_tags;
+					+ TRUNCATE a_tags;
+					+ TRUNCATE b_tags;
+					+ DROP TRIGGER t_tags ON new_tags CASCADE;
+					+ DROP TRIGGER t2_tags ON new_tags CASCADE;
+			- 10. Se combianara de lo que se esscribio en las funciones f1_tags() y f2_tags()
+					+ CREATE OR REPLACE FUNCTION f3_tags() RETURNS trigger as $$ BEGIN IF lower(substring(NEW.tag from 1 for 1)) = 'a' THEN insert into a_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent) RETURN NEW; ELSIF lower(substring(NEW.tag from 1 for 1)) = 'b' THEN insert into b_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent); RETURN NULL; ELSE RETURN NEW; END IF; END; $$ LANGUAGE 'plpgsql';
+					+ CREATE TRIGGER t3_tags BEFORE INSERT on new_tags FOR EACH ROW EXECUTE PROCEDURE f3_tags();
+				- contiene la lógica de las dos funciones vistas anteriormente
+					+ insert into new_tags (pk,tag,parent) values (1,'fruits',NULL);
+					+ insert into new_tags (pk,tag,parent) values(2,'apple',1);
+					+ insert into new_tags (pk,tag,parent) values (3,'banana',1);
+					+ select * from new_tags ;
+					+ select * from a_tags ;
+					+ select * from b_tags ;
+			- Se puede ecribir la funcion anteior de una manera maas simmple
+				+ CREATE OR REPLACE FUNCTION f3_tags() RETURNS trigger as
+					$$
+					BEGIN
+					IF lower(substring(NEW.tag from 1 for 1)) = 'a' THEN
+					nsert into a_tags(pk,tag,parent)values
+					(NEW.pk,NEW.tag,NEW.parent);
+					ELSIF lower(substring(NEW.tag from 1 for 1)) = 'b' THEN
+					insert into b_tags(pk,tag,parent)values
+					(NEW.pk,NEW.tag,NEW.parent);
+					RETURN NULL;
+					END IF;
+					RETURN NEW;
+					END;
+					$$
+					LANGUAGE 'plpgsql';
 		-- The TG_OP variable
+			- Los valores posibles de la variable TG_OP son INSERTAR, ELIMINAR , ACTUALIZAR y TRUNCAR
 	--- Triggers on UPDATE / DELETE
+		- hacer que todas las etiquetas que comienzan con la letra "a" se almacenen en la tabla new_tags y se copien en la tabla new_a_tags
+		- que comienzan con la letra "b".
+			+ create or replace rule r_new_tags_insert_a as on INSERT to new_tags where NEW.tag ilike 'a%' DO ALSO insert into new_a_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+			+ create or replace rule r_new_tags_insert_b as on INSERT to new_tags where NEW.tag ilike 'b%' DO ALSO insert into new_b_tags(pk,tag,parent)values (NEW.pk,NEW.tag,NEW.parent);
+		- una sola función llamada por los activadores que comenzarán antes de los eventos INSERT, UPDATE O DELETE
+			+ TRUNCATE new_tags;
+			+ TRUNCATE a_tags;
+			+ TRUNCATE b_tags;
+			+ drop trigger t3_tags ON new_tags cascade;
+		- código que se ejecutará durante el evento INSERT
+			+ CREATE OR REPLACE FUNCTION fcopy_tags() RETURNS trigger as
+				$$
+				BEGIN
+				IF TG_OP = 'INSERT' THEN
+				IF lower(substring(NEW.tag from 1 for 1)) = 'a' THEN
+				insert into a_tags(pk,tag,parent)values
+				(NEW.pk,NEW.tag,NEW.parent);
+				ELSIF lower(substring(NEW.tag from 1 for 1)) = 'b' THEN
+				insert into b_tags(pk,tag,parent)values
+				(NEW.pk,NEW.tag,NEW.parent);
+				END IF;
+				RETURN NEW;
+				END IF;
+				END;
+				$$
+				LANGUAGE 'plpgsql';
+			+ CREATE TRIGGER tcopy_tags_ins BEFORE INSERT on new_tags FOR EACH ROW EXECUTE PROCEDURE fcopy_tags();
+		- evento INSERT , este código funciona
+			+ insert into new_tags (pk,tag,parent) values (1,'fruits',NULL);
+			+ insert into new_tags (pk,tag,parent) values (2,'apple',1);
+			+ insert into new_tags (pk,tag,parent) values (3,'banana',1);
+			+ select * from a_tags;
+			+ select * from b_tags;
+			+ select * from new_tags;
+		- evento DELETE
+			- líneas de código a la función para administrar la operación DELETE
+				+ CREATE OR REPLACE FUNCTION fcopy_tags() RETURNS trigger as
+					$$
+					BEGIN
+					IF TG_OP = 'INSERT' THEN
+					IF lower(substring(NEW.tag from 1 for 1)) = 'a' THEN
+					insert into a_tags(pk,tag,parent)values
+					(NEW.pk,NEW.tag,NEW.parent);
+					ELSIF lower(substring(NEW.tag from 1 for 1)) = 'b' THEN
+					insert into b_tags(pk,tag,parent)values
+					(NEW.pk,NEW.tag,NEW.parent);
+					END IF;
+					RETURN NEW;
+					END IF;
+					IF TG_OP = 'DELETE' THEN
+					IF lower(substring(OLD.tag from 1 for 1)) = 'a' THEN
+					DELETE FROM a_tags WHERE pk = OLD.pk;
+					ELSIF lower(substring(OLD.tag from 1 for 1)) = 'b' THEN
+					DELETE FROM b_tags WHERE pk = OLD.pk;
+					END IF;
+					RETURN OLD;
+					END IF;
+					END;
+					$$
+					LANGUAGE 'plpgsql';
+			- elimina los datos de las tablas a_tags y b_tags si el registro que se va a eliminar comienza con la letra "a" o con la letra "b".
+			- El disparador para manejar el evento DELETE
+				+ CREATE TRIGGER tcopy_tags_del AFTER DELETE on new_tags FOR EACH ROW EXECUTE PROCEDURE fcopy_tags();
+			- nuevo activador en el evento DELETE
+				+ CREATE TRIGGER tcopy_tags_del AFTER DELETE on new_tags FOR EACH ROW EXECUTE PROCEDURE fcopy_tags();
+			- El activador se ejecuta DESPUÉS DE ELIMINAR
+				+ delete from new_tags where pk=2;
+				+ delete from new_tags where pk=3;
+				+ select * from a_tags;
+				+ select * from b_tags;
+				+ select * from new_tags;
+		- evento UPDATE
+			- Nueva funcion y valores a condiciones iniciales	
+				+ DROP TRIGGER tcopy_tags_ins ON new_tags cascade;
+				+ DROP TRIGGER tcopy_tags_del ON new_tags cascade;
+				+ TRUNCATE new_tags;
+				+ TRUNCATE a_tags;
+				+ TRUNCATE b_tags;
+				+ insert into new_tags (pk,tag,parent) values (1,'fruits',NULL);
+				+ insert into new_tags (pk,tag,parent) values (2,'apple',1);
+		- función completa con todos los disparadores para INSET, UPDATE, DELETE
+			+ CREATE OR REPLACE FUNCTION fcopy_tags() RETURNS trigger as
+				$$
+				BEGIN
+				IF TG_OP = 'INSERT' THEN
+				IF lower(substring(NEW.tag from 1 for 1)) = 'a' THEN
+				insert into a_tags(pk,tag,parent)values
+				(NEW.pk,NEW.tag,NEW.parent);
+				ELSIF lower(substring(NEW.tag from 1 for 1)) = 'b' THEN
+				insert into b_tags(pk,tag,parent)values
+				(NEW.pk,NEW.tag,NEW.parent);
+				END IF;
+				RETURN NEW;
+				END IF;
+				IF TG_OP = 'DELETE' THEN
+				IF lower(substring(OLD.tag from 1 for 1)) = 'a' THEN
+				DELETE FROM a_tags WHERE pk = OLD.pk;
+				ELSIF lower(substring(OLD.tag from 1 for 1)) = 'b' THEN
+				DELETE FROM b_tags WHERE pk = OLD.pk;
+				END IF;
+				RETURN OLD;
+				END IF;
+				IF TG_OP = 'UPDATE' THEN
+				IF (lower(substring(OLD.tag from 1 for 1)) in( 'a','b') ) THEN
+				DELETE FROM a_tags WHERE pk=OLD.pk;
+				DELETE FROM b_tags WHERE pk=OLD.pk;
+				DELETE FROM new_tags WHERE pk = OLD.pk;
+				INSERT into new_tags(pk,tag,parent) values
+				(NEW.pk,NEW.tag,NEW.parent);
+				END IF;
+				RETURN NEW;
+				END IF;
+				END;
+				$$
+				LANGUAGE 'plpgsql';
+
+				CREATE TRIGGER tcopy_tags_ins
+				BEFORE INSERT on new_tags FOR EACH ROW EXECUTE PROCEDURE fcopy_tags();
+				CREATE TRIGGER tcopy_tags_del
+				AFTER DELETE on new_tags FOR EACH ROW EXECUTE PROCEDURE fcopy_tags();
+				CREATE TRIGGER tcopy_tags_upd
+				AFTER UPDATE on new_tags FOR EACH ROW EXECUTE PROCEDURE fcopy_tags();
+		- el disparador debe definirse DESPUÉS DE LA ACTUALIZACIÓN
+			+ select * from new_tags;
+			+ select * from a_tags;
+			+ select * from b_tags;
+			+ update new_tags set tag='apricot' where pk=3;
 ---- eventos DE triggers
+		- Las reglas y los disparadores actúan como declaraciones de nivel de manipulación de datos (DML)
+		- cambia los datos, pero no el diseño de los datos ni las propiedades de la tabla
+		- disparadores de eventos: se activan en declaraciones DDL (Nivel de definición de datos)
+			- el propósito es administrar y reaccionar ante eventos que van a cambiar la estructura de los datos
+				- ddl_command_start y ddl_command_end indican respectivamente el comienzo y la finalización del comando DDL
+				- sql_drop indica que un comando DROP está a punto de completarse.
+				- table_rewrite indica que está a punto de comenzar una reescritura completa de la tabla.
+			- existen comandos particulares para crear, eliminar y modificar un disparador
+				- CREATE EVENT TRIGGER: agregar un nuevo desencadenante de eventos
+				- DROP EVENT TRIGGER: eliminar un disparador existente
+				- ALTER EVENT TRIGGER: modificar un activador existente
+			- sinopsis para la creación de un nuevo disparador de eventos
+				+ CREATE EVENT TRIGGER name
+					ON event
+					[ WHEN filter_variable IN (filter_value [, ... ]) [ AND ... ] ]
+					EXECUTE { FUNCTION | PROCEDURE } function_name()
+					- están asociados con un nombre mnemotécnico
+					- una función para ejecutar una vez que se disparan
+					- los disparadores de eventos no especifican a qué tabla están asociados
+					- no están relacionados con ninguna tabla en particular, sino con los comandos DDL
+					- deben ser creados por el administrador de la base de datos
+			- un par de funciones especiales que pueden ayudar a los desarrolladores
+				- pg_event_trigger_commands(): devuelve una tupla por cada comando que se ejecutó durante la instrucción DDL.
+				- pg_event_trigger_dropped_objects(): informa una tupla por cada objeto descartado dentro de la misma instrucción DDL
 	--- Un ejemplo de un disparador de eventos
+			- Ejercicio evita cualquier comando ALTER TABLE en una base de datos.
+			- primer paso es definir una función que se ejecutará una vez que se haya disparado el disparador
+			- La introspección se realiza mediante la función especial pg_event_trigger_ddl_commands() , que devuelve una tupla por cada instrucción DDL ejecutada
+			- La función debe devolver un tipo de disparador, específicamente un tipo de disparador de evento
+				+ CREATE OR REPLACE FUNCTION
+					f_avoid_alter_table()
+					RETURNS EVENT_TRIGGER
+					AS
+					$code$
+					DECLARE
+					event_tuple record;
+					BEGIN
+					FOR event_tuple IN SELECT *
+					FROM pg_event_trigger_ddl_commands() LOOP
+					IF event_tuple.command_tag = 'ALTER TABLE' AND
+					event_tuple.object_type = 'table' THEN
+					RAISE EXCEPTION 'Cannot execute an ALTER TABLE!';
+					END IF;
+					END LOOP;
+					END
+					$code$
+					LANGUAGE plpgsql;
+			- si la función descubre que el comando ejecutado tiene una etiqueta 'ALTER TABLE'
+			- si la función descubre que el comando ejecutado tiene una etiqueta 'ALTER TABLE' y un tipo de objeto 'table' , genera una excepción que hace que falle toda la instrucción
+			- es posible adjuntarla a un desencadenador de eventos:
+				+ CREATE EVENT TRIGGER tr_avoid_alter_table ON ddl_command_end EXECUTE FUNCTION f_avoid_alter_table();
+					- el activador está activo y la función se activará para cada comando DDL
+					- probar el activador y ver si un usuario puede ejecutar ALTER
+						+ ALTER TABLE tags ADD COLUMN thumbs_up int DEFAULT 0;
+					- lanza una excepción tan pronto como se ejecuta el comando ALTER TABLE
+					- para evitar que los usuarios ejecuten comandos particulares,
+					- medio de permisos siempre que sea posible
