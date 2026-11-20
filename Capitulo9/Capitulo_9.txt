@@ -3,10 +3,220 @@
 ****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
-----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
---- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+----------------------------------Sección 2: Interactuando con la Base de datos----------------------------------------------------
+---------------------Capítulo 9: Partitioning(Particionamiento)-----------------------------
+		- técnica que nos permite dividir una tabla enorme en tablas más pequeñas con la finalidad de ue las consultas sean mas eficientes.
+			- Conceptos básicos
+			- Particionamiento mediante herencia de tablas
+			- Partición declarativa
+---- Conceptos básicos
+		- una constante común a todas las bases de datos es que su tamaño siempre crece
+		- Ademas una BD, tras unos meses de crecimiento, alcance un tamaño de gigabytes, terabytes o petabytes
+		- Por otro lado debemos tener en cuenta que no todoas las tablas alamcenadas en la BD, crecen al mismo ritm ni al mismo nivel
+		- Con esto hay tablas que sean mas grandes que otras yablas y por lo tanto se implementaran indices que seran mas grnades que otros
+		- dentro de nuestro servidor la memoria RAM, compartida entre todos los pocesos de PostgreSQL
+		- Esta parte RAm del servidor se llama  shared_buffers.
+			- Los datos se toman de los discos
+			- Los datos se colocan en búferes compartidos
+			- Los datos se procesan en búferes compartidos
+			- Los datos se descargan en discos
+		- un servidor dedicado solo para PostgreSQL el tamaño de shared_buffers es aproximadamente un tercio o un cuarto de la memoria RAM total del servidor
+			- https://pgtune.leopard.in.ua.
+		- Cuando una tabla crece demasiado en comparación con el tamaño de shared_buffers , existe la posibilidad de que el rendimiento disminuya.
+		- Particionar datos significa dividir una tabla muy grande en tablas más pequeñas de una manera que sea transparente
+		- El programa cliente pensará que el servidor todavía tiene una sola tabla
+		- puede hacer de dos maneras
+			- Uso de la herencia de tablas
+			- Uso de partición declarativa
+		- PostgreSQL 12 administra los siguientes tipos de partición de tablas
+			- Partición de rango
+			- Lista de particiones
+			- Partición hash
+	--- Partición de rango
+		- es donde la tabla se divide en "intervalos".
+		- Dichos intervalos no deben superponerse
+		- El rango se define mediante el uso de un campo o conjunto de campos
+		- ejemplo de la definición de partición de rango
+			+ queremos dividir esta tabla en dos tablas (TABLA A Y TABLA B)
+			+ Se hace aparitr de un campo y con rngos dados
+	--- Lista de particiones
+		- la tabla se dividirá utilizando una lista de valores
+		- Supongamos ahora que queremos dividir esta tabla en n tablas, con una tabla para cada estado
+			+ TABLA A  CONTENDRA registros con un valor IGUAL  A "Estados Unidos" 
+			+ TABLA B  CONTENDRA registros con un valor IGUAL  A "Italia"
+			+ TABLA C  CONTENDRA registros con un valor IGUAL  A "Japón" 
+	--- Partición hash
+		- la tabla se dividirá usando un valor hash
+		- Se usara como el valor para dividir los datos en diferentes tablas
+			+ hash(2020-03-01) = AAAAAAB
+			+ hash(2020-03-02) = AAAAAAC
+			+ hash(2020-04-01) = AAAAAAB
+			+ hash(2020-04-15) = AAAAAAC
+		- Como resultado abra dos tablas a y b 
+	--- herencia de tablas
+			- PostgreSQL retoma el concepto de herencia  de bases de datos a objetos
+			- tenemos dos tablas, la tabla A y la tabla B
+			- tabla A = principal y tabla B = secuandaria 
+			- Como resultado todos los registros de la tabla B pueden ser accesibles desde la tabla A 
+			- Ejemplo demostrativo
+				- 1. definamos dos tablas
+					- tabla principal
+						+ create table table_a ( pk integer not null primary key, tag text, parent integer);
+					- tabla secundarria
+						+ create table table_b () inherits (table_a);
+						+ alter table table_b add constraint table_b_pk primary key(pk);
+						+ \sf f_avoid_alter_table // inspecciona el tiger
+						+ SELECT evtname, evtevent, evtenabled  FROM pg_event_trigger  WHERE evtfoid = 'f_avoid_alter_table'::regproc;
+							- busca el tigger
+						+ ALTER EVENT TRIGGER tr_avoid_alter_table DISABLE;
+							- desactiva el evento
+				- 2. La tabla secundaria hereda todos los campos de la tabla principal
+					+ \d table_a;
+						- Y para más detalles
+							+ forumdb=# \d+ table_a;
+						- podemos ver que table_b es una tabla hija de table_a
+				- 3. Mismo para la tabla bases
+					+ \d table_b;
+					- podemos ver que table_b es una tabla secundaria de table_a.
+				- 4. veamos cómo se comportan estas dos tablas si insertamos, modificamos o eliminamos datos.
+					+ insert into table_a (pk,tag,parent) values (1,'fruits',0);
+					+ insert into table_b (pk,tag,parent) values (2,'orange',0);
+				- 5. Consultemos nuestra tabla secundaia
+					+ select * from table_b ;
+					- table_b tiene un registro
+				- 6. Consultemos tabla principal
+					+ select * from table_a ;
+					- table_a tiene dos registros
+					- La tabla principl (tabla a) hereda los atributos de la otra tabla b
+				- 7 ver registros que pertenecen solo a table_a,
+					+ select * from only table_a ;
+				- 8. ACTUALIZACION: SE ATULIZARAN EGISTROS EN LA TBLA A
+					+ update table_a set tag='apple' where pk=2;
+					- La operacion fue realizada en la tabla a, pero la actualizacion se reañizo fisicamente tambien en la tabla b mediante la implmentacion de la heencia de tablas
+						+ select * from table_b;
+				- 9. DELETE. para la operacion de eluminar registro en la tabla a
+					+ delete from table_a where pk=2;
+					- la operación de eliminación realizada en table_a tiene su efecto  en table_b
+						+ select * from table_a;
+						+ select * from table_b;
+			- En PostgreSQL 12, la herencia propaga las operaciones realizadas en la tabla principal a las tablas secundarias.
+		-- Eliminación de tablas
+			- Si queremo elmianr tablas con herencia. como por ejemplo eliminar table_b que es secundaria
+				+ drop table table_b;
+			- Pero si queremos eliminar la tabla principal con sus tablas secundrias viculadas
+				+ drop table table_a cascade;
+---- Explorando la partición usando la herencia
+		- es posible utilizar la herencia para consultar una tabla principal y administrar los datos de las tablas secundarias
+	--- Un ejemplo de partición de lista
+			- crear una tabla particionada utilizando la lógica de partición de listas.
+			- dividir nuestros datos utilizando el valor del campo de level
+			- Contar con cuatro lvels y cada tabla un level
+			- Ademas de que todos los registros level = 0 asi sucesiamene
+		-- Creando tablas
+			- crear una tabla principal y sus tablas secundarias
+				-1. tabla principal
+					+ CREATE SEQUENCE part_tags_pk_seq;
+					+ CREATE TABLE part_tags ( pk INTEGER NOT NULL DEFAULT nextval('part_tags_pk_seq') PRIMARY KEY, tag VARCHAR(255) NOT NULL, level INTEGER DEFAULT 0);
+				-2. tablas secundarias
+					+ CREATE TABLE part_tags_level_0 ( CHECK(level = 0 ) ) INHERITS (part_tags);
+					+ CREATE TABLE part_tags_level_1 ( CHECK(level = 1 ) ) INHERITS (part_tags);
+					+ CREATE TABLE part_tags_level_2 ( CHECK(level = 2 ) ) INHERITS (part_tags);
+					+ CREATE TABLE part_tags_level_3 ( CHECK(level = 3 ) ) INHERITS (part_tags);
+						- El comando de check en el campo de level tiene dos funciones:
+							- evitar valores incorrectos en las tablas hijas
+							- hacer que PostgreSQL realice la poda correcta de los datos
+						- parámetro de constraint_exclusion
+							+ select name,short_desc,extra_desc from pg_settings where name ='constraint_exclusion';
+						- Este parámetro hace posible que el optimizador de consultas excluya algunas tablas secundarias dela búsqueda
+							+ select * from part_tags where level = 1;
+						- Los valores posibles para el parámetro de restricción_exclusión son los siguientes
+							- on: PostgreSQL examina todas las tablas
+							- off: PostgreSQL no examina ninguna restricción
+							- partition: PostgreSQL verifica las restricciones para las subconsultas UNION ALL y solo para las tablas secundarias de herencia, y la partición es la configuración predeterminada
+				- 3. crear sus claves principales
+					+ ALTER TABLE ONLY part_tags_level_0 add constraint part_tags_level_0_pk primary key (pk);
+					+ ALTER TABLE ONLY part_tags_level_1 add constraint part_tags_level_1_pk primary key (pk);
+					+ ALTER TABLE ONLY part_tags_level_2 add constraint part_tags_level_2_pk primary key (pk);
+					+ ALTER TABLE ONLY part_tags_level_3 add constraint part_tags_level_3_pk primary key (pk);
+				- 4. crear todos los índices que necesitamos para nuestras consultas
+					+ CREATE EXTENSION pg_trgm ;
+					+ CREATE INDEX part_tags_level_0_tag on part_tags_level_0 using GIN (tag gin_trgm_ops);
+					+ CREATE INDEX part_tags_level_1_tag on part_tags_level_1 using GIN (tag gin_trgm_ops);
+					+ CREATE INDEX part_tags_level_2_tag on part_tags_level_2 using GIN (tag gin_trgm_ops);
+					+ CREATE INDEX part_tags_level_3_tag on part_tags_level_3 using GIN (tag gin_trgm_ops);
+		-- Creación de disparadores y funciones, e inserción de datos
+			- asegurarse de que los datos no se inserten en la tabla principal sino en las tablas secundarias.
+				- 1. crear la función que llamará al tigger
+					+ CREATE OR REPLACE FUNCTION insert_part_tags () RETURNS TRIGGER as
+						$$
+						BEGIN
+						IF NEW.level = 0 THEN
+						INSERT INTO part_tags_level_0 values (NEW.*);
+						ELSIF NEW.level = 1 THEN
+						INSERT INTO part_tags_level_1 values (NEW.*);
+						ELSIF NEW.level = 2 THEN
+						INSERT INTO part_tags_level_2 values (NEW.*);
+						ELSIF NEW.level = 3 THEN
+						INSERT INTO part_tags_level_3 values (NEW.*);
+						ELSE
+						RAISE EXCEPTION 'Error in part_tags, level out of range';
+						END IF;
+						RETURN NULL;
+						END;
+						$$
+						language 'plpgsql';
+				-2. crear el trigger:
+					+ CREATE TRIGGER insert_part_tags_trigger BEFORE INSERT ON part_tags FOR EACH ROW EXECUTE PROCEDURE insert_part_tags();
+						- Este activador mueve el registro a las tablas secundarias y devuelve a la tabla principal un registro NULL
+						- no se insertará ningún registro en la tabla principal.
+				-3. declaraciones INSERT
+					+ insert into part_tags (tag,level) values ('vegetables',0);
+					+ insert into part_tags (tag,level) values ('fruits',0);
+					+ insert into part_tags (tag,level) values ('orange',1);
+					+ insert into part_tags (tag,level) values ('apple',1);
+					+ insert into part_tags (tag,level) values ('red apple',2);
+						- consultamos la tabla padre,
+							+ select * from part_tags;
+						- En la tabla principal, no hay datos:
+							+ select * from only part_tags;
+				- 4. todos los datos se almacenan en las tablas hijo en susu diferentes niveles
+					+ select * from only part_tags_level_0;
+					+ select * from only part_tags_level_1;
+					+ select * from only part_tags_level_2;
+		-- Creación de activadores y funciones y actualización de datos
+			- eliminación de un registro en la tabla principal se propaga automáticamente a las tablas secundaias
+				+ delete from part_tags where tag='apple';
+				+ select * from only part_tags_level_1;
+				+ select * from part_tags;
+					- el registro se ha eliminado correctamente
+					- lo mismo sucede cuando modificamos un registro y el cambio queda dentro de la misma tabla secundaria
+						+ update part_tags set tag='apple' where pk=3;
+					- el registro se ha actualizado correctamente
+						+ select * from part_tags;
+						+ select * from only part_tags_level_1;
+					- Un problema ocurre cuando la actualización se tiene que mover a otra tabla secundaria
+						+ update part_tags set level=1,tag='apple' where pk=10;
+					- Para mover datos entre tablas secundarias, debemos agregar otro activador para cada tabla secundaria
+						+ CREATE OR REPLACE FUNCTION update_part_tags() RETURNS TRIGGER AS
+							$$
+							BEGIN
+							IF (NEW.level != OLD.level) THEN
+							DELETE FROM part_tags where pk = OLD.PK;
+							INSERT INTO part_tags values (NEW.*);
+							END IF;
+							RETURN NULL;
+							END;
+							$$
+							LANGUAGE 'plpgsql';
+						+ CREATE TRIGGER update_part_tags_trigger BEFORE UPDATE ON part_tags_level_0 FOR EACH ROW EXECUTE PROCEDURE update_part_tags();
+						+ CREATE TRIGGER update_part_tags_trigger BEFORE UPDATE ON part_tags_level_1 FOR EACH ROW EXECUTE PROCEDURE update_part_tags();
+						+ CREATE TRIGGER update_part_tags_trigger BEFORE UPDATE ON part_tags_level_2 FOR EACH ROW EXECUTE PROCEDURE update_part_tags();
+						+ CREATE TRIGGER update_part_tags_trigger BEFORE UPDATE ON part_tags_level_3 FOR EACH ROW EXECUTE PROCEDURE update_part_tags();
+					- empleemos una actualización:
+						+  update part_tags set level=1,tag='apple' where pk=5;
+---- Explorando la partición declarativa
+		- disponible en PostgreSQL a partir de la vevrsion 10
+	--- List partitioning
+	--- Partición de rango
+		-- Mantenimiento de particiones
+SELECT evtname, evtevent, evtenabled  FROM pg_event_trigger  WHERE evtfoid = 'f_avoid_alter_table'::regproc;
