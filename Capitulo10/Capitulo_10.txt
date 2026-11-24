@@ -3,10 +3,60 @@
 ****************Sub Titulo: Build and manage high-performance database solutionsusing PostgreSQL 12 and 13******
 *********************************Autor: Luca Ferrari, Enrico Pirozzi********************************************
 ***************************************************************************************************************/
-----------------------------------Sección 1: Primeros pasos----------------------------------------------------
----------------------Capítulo 1: Introducción a PostgreSQL
---- Requerimientos técnicos
---- PostgreSQL de un vistazo
---- Explorando la terminología de PostgreSQL
---- Instalación de PostgreSQL 12 o superior
---- Referencias
+----------------------------------Sección 3: Administering the Cluster----------------------------------------------------
+		- Se apendera cómo interactuar con el clúster para mantenerlo bajo control, ajustarlo y buscar problemas o cuellos de botella.
+---------------------Capítulo 10 : Usuarios, roles y base de datos Seguridad
+		- PostgreSQL presta gran atención a la seguridad
+		- manejar permisos, privilegios y políticas de seguridad 
+---- Comprender los roles
+		- CREATE ROLE es crear el rol y modificar las propiedades principales
+		- sinopsis para crear un nuevo rol
+			+ CREATE ROLE name [ [ WITH ] option [ ... ] ]
+	--- Propiedades relacionadas con nuevos objetos
+		- dos capacidades principales que un rol puede adquirir para crear nuevos objetos,
+			- CREATEROLE: permite que un rol cree otros roles (y, por lo tanto, cuentas y grupos de bases de datos).
+			- CREATEDB: permite que un rol cree otras bases de datos dentro del clúster.
+		- De forma predeterminada, si no se especifica crea un nuevo rol sin tales capacidades:
+			+ CREATE ROLE luca;
+		- La siguiente sentencia es lo mismos-:
+			+ CREATE ROLE luca WITH NOCREATEROLE NOCREATEDB;
+	--- Propiedades relacionadas con superusuarios
+		- Con la propiedad SUPERUSER , el rol se crea como administrador
+		- Tiene todos los derechos sobre cada objeto dentro del clúster, incluida la capacidad de cambiar la configuración de PostgreSQL
+		- terminar las conexiones de los usuarios y detener el clúster
+		- evitar otorgar todos los permisos a usuarios que no son de confianza por la nula estricion que posee en otras palabas tiene todos los recursos para ahcer lo que desee
+	--- Propiedades relacionadas con la replicación
+		- La propiedad REPLICATION se usa para especificar que el nuevo rol podrá usar el protocolo de replicación,
+		- LA REPLICACIÓN es una opción que permite que un rol acceda a todos los datos dentro del clúster sin ninguna restricción en particular.
+		- Por sus implicaciones de seguridad, si no se especifica lo contrario, se establece la opción NOREPLICACIÓN
+	--- Propiedades relacionadas con la seguridad a nivel de fila
+		- Role Level Security (RLS) es un mecanismo de cumplimiento de políticas que evita que ciertos roles obtengan  acceso a tuplas específicas dentro de tablas específicas
+		- Es decir cuando se ocupa este tipo de seguridad a nivel de filas de una tbla , para que cierto usarios accedan o no a iertas flas.
+		- RLS: 
+	--- Cambio de propiedades de roles existentes: el ALTER Declaración de ROL
+		-- Cambiar el nombre de un rol existente
+		-- SESSION_USER versus CURRENT_USER
+		-- Parámetros de configuración por rol
+	--- Inspeccionar roles
+	--- Roles que heredan de otros roles
+		-- Comprender cómo se resuelven los privilegios
+		-- Descripción general de la herencia de funciones
+---- Listas de control de acceso
+	--- Default ACLs
+		-- Conocer las ACL predeterminadas
+---- Otorgamiento y revocación de permisos
+	--- Permisos relacionados con las tablas
+	--- Permisos basados en columnas
+	--- Permisos relacionados con secuencias}
+	--- Permisos relacionados con esquemas
+	--- Permisos relacionados con los idiomas
+	--- Permisos relacionados con las rutinas
+	--- Permisos relacionados con las bases de datos
+	--- Otras sentencias GRANT y REVOKE
+	--- Asignación del propietario del objeto
+	--- Inspección de ACL
+---- Seguridad a nivel de fila
+---- Cifrado de contraseña de rol
+---- conexiones SSL
+	--- Configuración del clúster para SSL
+	--- Conexión al clúster a través de SSL
