@@ -214,9 +214,85 @@
 						+ CREATE TRIGGER update_part_tags_trigger BEFORE UPDATE ON part_tags_level_3 FOR EACH ROW EXECUTE PROCEDURE update_part_tags();
 					- empleemos una actualización:
 						+  update part_tags set level=1,tag='apple' where pk=5;
+						+ select * from part_tags;
 ---- Explorando la partición declarativa
 		- disponible en PostgreSQL a partir de la vevrsion 10
 	--- List partitioning
+		- las cosas se vuelven mucho más simples con el método de partición declarativa
+			- 1. Elimnamos tablaa principal y secuandaria
+				+ DROP TABLE IF EXISTS part_tags cascade;
+			- 2. Se volveran a crer usando e metodo declarativo, tabla principal	
+				+ CREATE TABLE part_tags ( pk INTEGER NOT NULL DEFAULT nextval('part_tags_pk_seq') , level INTEGER NOT NULL DEFAULT 0, tag VARCHAR (255) NOT NULL, primary key (pk,level) ) PARTITION BY LIST (level);
+					- en la sentencia anterior debemos definir qué tipo de partición queremos aplicar
+					- el campo utilizado para particionar los datos debe ser parte de la clave principal
+			- 3. tablas secundarias:
+				+ CREATE TABLE part_tags_level_0 PARTITION OF part_tags FOR VALUES IN (0);
+					- todos los registros con un valor de nivel igual a 0 se almacenarán en la tabla part_tags_level_0
+				+ CREATE TABLE part_tags_level_1 PARTITION OF part_tags FOR VALUES IN (1);
+					- todos los registros con un valor de nivel igual a 1 se almacenarán en la tabla part_tags_level_1
+				+ CREATE TABLE part_tags_level_2 PARTITION OF part_tags FOR VALUES IN (2);
+				+ CREATE TABLE part_tags_level_3 PARTITION OF part_tags FOR VALUES IN (3);
+			- 4. definamos los índices para la tabla principal y para todas las tablas
+				+ CREATE INDEX part_tags_tag on part_tags using GIN (tag gin_trgm_ops);
+			- 5. Tabla principal
+				+ \d part_tags;
+				+ \d part_tags_level_0;
+			- 6. Realicemos ahora algunas operaciones de INSERCIÓN :
+				+ insert into part_tags (tag,level) values ('vegetables',0);
+				+ insert into part_tags (tag,level) values ('fruits',0);
+				+ insert into part_tags (tag,level) values ('orange',1);
+				+ insert into part_tags (tag,level) values ('apple',1);
+				+ insert into part_tags (tag,level) values ('red apple',2);
+			- 7. verifiquemos
+				+ select * from part_tags;
+				+ select * from part_tags_level_0;
 	--- Partición de rango
+			1. eliminemos la tabla part_tags existente y su tabla secundaria
+				+ DROP TABLE IF EXISTS part_tags cascade;
+			2. queremos tener una tabla exactamente igual a la anterior 
+				- la tabla part_tags tenga un campo ins_date donde  almacenar el día en que se agregó la etiqueta.
+				- Particionar por rango en el campo credo anteriormente 
+					- 1 era tabla> Enero 2020
+					- febrero 2020
+					- marzo 2020
+					- abril 2020
+						+ CREATE TABLE part_tags ( pk INTEGER NOT NULL DEFAULT nextval('part_tags_pk_seq'), ins_date date not null default now()::date, tag VARCHAR (255) NOT NULL, level INTEGER NOT NULL DEFAULT 0, primary key (pk,ins_date) ) PARTITION BY RANGE (ins_date);
+						+ CREATE TABLE part_tags_date_01_2020 PARTITION OF part_tags FOR VALUES FROM ('2020-01-01') TO ('2020-01-31');
+						+ CREATE TABLE part_tags_date_02_2020 PARTITION OF part_tags FOR VALUES FROM ('2020-02-01') TO ('2020-02-28');
+						+ CREATE TABLE part_tags_date_03_2020 PARTITION OF part_tags FOR VALUES FROM ('2020-03-01') TO ('2020-03-31');
+						+ CREATE TABLE part_tags_date_04_2020 PARTITION OF part_tags FOR VALUES FROM ('2020-04-01') TO ('2020-04-30')
+						+ CREATE INDEX part_tags_tag on part_tags using GIN (tag gin_trgm_ops);
+				- 3. tabla padre y todas las tablas hijas de una manera sencilla
+					+ \d part_tags;
+					+ \d part_tags_date_01_2020;
+				- 4. INSERT
+					+ insert into part_tags (tag,ins_date,level) values ('vegetables','2020-01-01',0);
+					+ insert into part_tags (tag,ins_date,level) values ('fruits','2020-01-01',0);
+					+ insert into part_tags (tag,ins_date,level) values ('orange','2020-02-01',1);
+					+ insert into part_tags (tag,ins_date,level) values ('apple','2020-03-01',1);
+					+ insert into part_tags (tag,ins_date,level) values ('red apple','2020-04-01',2);
+				- 5. comprobemos
+					+ select * from part_tags;
+					+ select * from part_tags_date_01_2020;
+					+ select * from part_tags_date_02_2020;
+					+ select * from part_tags_date_03_2020;
+					+ select * from part_tags_date_04_2020;
 		-- Mantenimiento de particiones
+			- Adjuntar una nueva partición
+				- nueva partición a la tabla principal
+					+ CREATE TABLE part_tags_date_05_2020 PARTITION OF part_tags FOR VALUES FROM ('2020-05-01') TO ('2020-05-30');
+						- nueva partición llamada part_tags_date_05_2020
+							+ \d part_tags;
+							+ \d part_tags_date_05_2020
+				- Separar una partición existente
+					- eparar una partición existente de la tabla padre
+						+ ALTER TABLE part_tags DETACH PARTITION part_tags_date_05_2020 ;
+							- partición llamada part_tags_date_05_2020 ha sido  separado de la tabla principal part_tags
+								+ \d part_tags;
+				- Adjunte una tabla ya existente a la tabla principal
+					- tenemos una tabla part_tags_already_exists ya presente en nuestra base de datos
+						+ \d part_tags_already_exists;
+							- adjuntar esta tabla que contiene todas las etiquetas con una fecha ingresada anterior a tabla principal
+								+ ALTER TABLE part_tags ATTACH PARTITION part_tags_already_exists FOR VALUES FROM ('1970-01-01') TO ('2019-12-31');
+									- la tabla part_tags_already_exists se convierte en una tabla secundaria para la tabla principal
 SELECT evtname, evtevent, evtenabled  FROM pg_event_trigger  WHERE evtfoid = 'f_avoid_alter_table'::regproc;
