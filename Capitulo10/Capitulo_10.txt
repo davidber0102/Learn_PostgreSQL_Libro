@@ -33,12 +33,95 @@
 		- Role Level Security (RLS) es un mecanismo de cumplimiento de políticas que evita que ciertos roles obtengan  acceso a tuplas específicas dentro de tablas específicas
 		- Es decir cuando se ocupa este tipo de seguridad a nivel de filas de una tbla , para que cierto usarios accedan o no a iertas flas.
 		- RLS: 
-	--- Cambio de propiedades de roles existentes: el ALTER Declaración de ROL
+			- BYPASSRLS: el rol omite (es decir, no está sujeto a)  todas las restricciones de seguridad en cada fila dentro del clúster
+			- El valor predeterminado para esta opcion es NOBYPASSRLS
+	--- Cambio de propiedades de roles existentes: Declaración ALTER ROL
+			- los roles una vez creados no son inmutables
+			- Se puede agregar o quitar caracteristicas a un rol determinado mediante la sentencia sql ALTER ROLE
+			- La sinopsis de la sentencia es:
+				+ ALTER ROLE name [ [ WITH ] option [ ... ] ]
+					- Nombre del rol unico
+					- las opciones alternas se puede especificar de la misma maner que al crrarlos osea CREATE ROL
+					- Ejemplo: proporcionar al rol "luca" las capacidades para crear base de datos y nuevos roles
+						+ ALTER ROLE luca WITH CREATEDB;
+						+ ALTER ROLE luca WITH CREATEROLE;
+					- Se puede simplicar lo anterior con la siguiente senecia
+						+ ALTER ROLE luca CREATEROLE CREATEDB;
+					- eliminar una o ambas opciones asignando la forma negada
+						+ ALTER ROLE luca NOCREATEROLE, NOCREATEDB;
+			- La declaracion en estudio ALTER ROLE, SIEMPRE SERA EJECUTADA PRO UN SUPERUSUARIO 
 		-- Cambiar el nombre de un rol existente
+			- ALTER ROLE:  Permite cambiar el nombre del rol mediante la clausala RENAME
+				+ ALTER ROLE enrico RENAME TO enrico_pirozzi;
+					- recuerda que debe cambiar la contraseña para el rol renombrado
 		-- SESSION_USER versus CURRENT_USER
+			- palabras clave particulares: SESSION_USER y CURRENT_USER.
+				- SESSION_USER-: es el nombre de rol conectado a la bbdd.
+				- CURRENT_USER:nombre de la función que se ha establecido explícitamente mediante un instrucción SET ROLE
+				- Ejemplo.  el usuario luca abre una conexión a la base de datos
+					- USER como CURRENT_USER tienen el mismo valor:
+					+ psql -U luca forumdb
+					+ SELECT current_user, session_user;
+					- Suponga que el rol de luca es miembro del grupo forum_stats , por lo que es posible realizar una transformación explícita a dicho rol:
+						+ SET ROLE forum_stats;
+						+ SELECT current_user, session_user;
 		-- Parámetros de configuración por rol
-	--- Inspeccionar roles
+			- también se pueden adjuntar con algunos parámetros de configuración que pueden documentar el uso
+			- el usuario luca ejecuta un comando SET para el valor client_min_messages cada vez que se conecta a la base de datos
+				+ psql -U luca forumdb
+				+ SET client_min_messages TO 'DEBUG';
+			- puede ser molesto y, y ariesgado
+			- podría olvidarse de ejecutar el comando SET que requiere para el correcto funcionamiento de la conexión.
+			- SET automáticamente tan pronto como se establezca una conexión
+				+ ALTER ROLE luca IN DATABASE forumdb SET client_min_messages TO 'DEBUG';
+			- ada vez que el rol de luca se conecta a la base de datos forumdb , el comando SET se ejecuta automáticamente
+				+ psql -U luca forumdb
+				+ SHOW client_min_messages;
+			- La sintaxis general para cambiar los parámetros de tiempo de ejecución de un rol es la siguiente
+				+ ALTER ROLE name IN DATABASE dbname SET parameter_name TO parameter_value
+					- debe especificar el nombre del rol o la palabra clave especial ALL para cada rol existente
+					- es posible descartar cualquier configuración por rol con la cláusula RESET ALL
+						+ ALTER ROLE luca IN DATABASE forumdb RESET ALL;
+	--- Inspeccionando roles
+		- diferentes formas de inspeccionar los roles existentes y obtener información
+			+ \du
+				- Laa columna Attributes: descripción mnemotécnica de las propiedades del rol
+				- Columna Member of: indica todos los grupos en los que se encuentra un rol
+				- la tabla pg_authid: contiene una fila por rol existente con una columna que refleja cada propiedad del rol
+					+ \x
+					+ SELECT * FROM pg_authid WHERE rolname = 'luca';
+						- Cada rol tiene un nombre único y también un valor OID
+						- las propiedades del rol tienen un valor booleano, donde 'f' significa falso y "t" significa verdadero
+						- rolpassword expresa como un hash, contraseña ha sido encriptada
+				- catálogo g_roles, misma información que la tabla anterior
+					+ SELECT * FROM pg_roles WHERE rolname = 'luca';
+				-pg_authid solo se puede consultar  por un super usuarios mientras el otro catalogo otros oles
+				- Proporcionar lista de grupos de roles	
+					+ SELECT r.rolname, g.rolname AS group, m.admin_option AS is_admin FROM pg_auth_members m JOIN pg_roles r ON r.oid = m.member JOIN pg_roles g ON g.oid = m.roleid ORDER BY r.rolname;
 	--- Roles que heredan de otros roles
+			- un rol puede contener otros roles, por lo tanto comportándose como un grupo
+			- Cuando un rol se convierte en miembro de otro rol, obtiene todos los permisos del rol del grupo.
+			- La propiedad INHERIT de un rol discrimina cómo los roles pueden usar los privilegios del grupo
+				- Si un rol cuenta con la propiedad INHERIT podra extender sus permisos a susmiembros
+				- Si la propiedad es NOINHERIT no se roaga
+			- Ejemplo: Constuir un par de grupos y asgnarles miembros
+				+ CREATE ROLE forum_admins WITH NOLOGIN;
+				+ CREATE ROLE forum_stats WITH NOLOGIN;
+				+ REVOKE ALL ON users FROM forum_stats;
+				+ GRANT forum_stats TO luca;
+					- el rol enrico puede realizar lo que el rol forum_admins le permite hacer en la tabla de usuarios
+					- siendo miembro del grupo forum_admins , el rol enrico puede realizar  cualquier acción en la tabla de usuarios
+				+ psql -U enrico forumdb 
+				+ SELECT * FROM users;
+				+ UPDATE users SET gecos = upper( gecos );
+				+ SELECT * FROM users;
+					- usuario enrico en realidad ha cambiado el nombre y apellido de los usuarios  existentes a una cadena completa en mayúsculas.
+				- El usurio liuca
+					+ psql -U luca forumdb
+					+ SELECT * FROM users; // permiso denegado
+					+ SELECT username, gecos FROM users;
+					+ UPDATE users SET gecos = lower( gecos ); // permiso denegado
+						-el usuario luca no puede realizar nada más que lo que se le ha otorgado al rol
 		-- Comprender cómo se resuelven los privilegios
 		-- Descripción general de la herencia de funciones
 ---- Listas de control de acceso
